@@ -64,3 +64,99 @@ a:hover {
   background-color: #cce2ff;
   color: rgba(0, 0, 0, 0.87);
 }
+
+/* ─── HIVE Handbook ─────────────────────────────────────────────────────────── */
+
+/* Font aliases — swap to GDS Transport by changing these two lines only */
+:root {
+  --hive-font-body: var(--font-dm-sans, "DM Sans"), Arial, sans-serif;
+  --hive-font-display: var(--font-dm-serif, "DM Serif Display"), Georgia, serif;
+  --hive-bg: #f9f9f8;
+}
+
+/* Keyframe animations */
+@keyframes hive-slide-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes hive-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%           { transform: translateY(-4px); }
+}
+
+@keyframes hive-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+@keyframes hive-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hive-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes hive-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes hive-scroll-x {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Utility animation classes */
+.hive-fade-up  { animation: hive-fade-up  0.35s ease forwards; }
+.hive-fade-in  { animation: hive-fade-in  0.25s ease forwards; }
+.hive-card-enter { animation: hive-fade-up 0.3s ease forwards; }
+
+/* Loading skeleton shimmer */
+.hive-skeleton {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 400px 100%;
+  animation: hive-shimmer 1.4s infinite;
+  border-radius: 4px;
+}
+
+/* Loading bar (nav shimmer) */
+.hive-loading-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #e8f1fb 25%, #1d70b8 50%, #e8f1fb 75%);
+  background-size: 400px 100%;
+  animation: hive-shimmer 1.4s infinite;
+}
+
+/* Scrollbar styling for handbook components */
+.hive-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.hive-scroll::-webkit-scrollbar-thumb {
+  background: #e4e0d8;
+  border-radius: 2px;
+}
+
+/* Line clamp utilities */
+.hive-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hive-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.hive-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

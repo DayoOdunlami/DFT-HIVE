@@ -1,8 +1,4 @@
-// @ts-nocheck
-"use client";
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 
 // ── ALL 50 MARQUEE CASE STUDIES ──
 // caseStudyId = links marquee card directly to a rich result card
@@ -343,59 +339,40 @@ const THEMES = {
 };
 
 
-const SECTOR_STYLES: Record<string, { background: string; color: string; borderColor: string }> = {
-  Rail: { background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" },
-  Aviation: { background: "#f0f9ff", color: "#0369a1", borderColor: "#bae6fd" },
-  Maritime: { background: "#f0fdfa", color: "#0f766e", borderColor: "#99f6e4" },
-  Road: { background: "#fffbeb", color: "#b45309", borderColor: "#fde68a" },
-  Highways: { background: "#fffbeb", color: "#b45309", borderColor: "#fde68a" },
-  Energy: { background: "#faf5ff", color: "#7e22ce", borderColor: "#e9d5ff" },
-  Multiple: { background: "#fafaf9", color: "#57534e", borderColor: "#e7e5e4" },
+const SECTOR_COLOR = {
+  Rail: "bg-blue-50 text-blue-700 border-blue-200",
+  Aviation: "bg-sky-50 text-sky-700 border-sky-200",
+  Maritime: "bg-teal-50 text-teal-700 border-teal-200",
+  Road: "bg-amber-50 text-amber-700 border-amber-200",
+  Highways: "bg-amber-50 text-amber-700 border-amber-200",
+  Energy: "bg-purple-50 text-purple-700 border-purple-200",
+  Multiple: "bg-stone-50 text-stone-600 border-stone-200",
 };
-const DEFAULT_SECTOR_STYLE = { background: "#fafaf9", color: "#57534e", borderColor: "#e7e5e4" };
-
-const HAZARD_CAUSE_STYLES: Record<string, { background: string; color: string; borderColor: string }> = {
-  "Heavy rainfall": { background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" },
-  "High temperatures": { background: "#fff7ed", color: "#c2410c", borderColor: "#fed7aa" },
-  Storms: { background: "#faf5ff", color: "#7e22ce", borderColor: "#e9d5ff" },
-  "Sea level rise": { background: "#f0fdfa", color: "#0f766e", borderColor: "#99f6e4" },
-  Drought: { background: "#fffbeb", color: "#b45309", borderColor: "#fde68a" },
-  "Freeze-thaw": { background: "#f0f9ff", color: "#0369a1", borderColor: "#bae6fd" },
-};
-const DEFAULT_HAZARD_STYLE = { background: "#f9fafb", color: "#4b5563", borderColor: "#e5e7eb" };
-const EFFECT_STYLE = { background: "#fafaf9", color: "#57534e", borderColor: "#e7e5e4" };
 
 // ── MARQUEE CARD ──
 const MarqueeCard = ({ c, onClick, dimmed, highlighted }) => {
   const [hovered, setHovered] = useState(false);
-  const sectorStyle = SECTOR_STYLES[c.sector] || DEFAULT_SECTOR_STYLE;
   return (
   <div
     onClick={() => onClick(c)}
     onMouseEnter={() => setHovered(true)}
     onMouseLeave={() => setHovered(false)}
-    className={`marquee-card ${highlighted ? "highlighted" : ""}`}
+    className={`flex-shrink-0 cursor-pointer rounded-2xl border marquee-card ${highlighted ? 'highlighted' : ''} transition-all duration-300 p-4`}
     style={{
       width: "280px",
-      flexShrink: 0,
-      cursor: "pointer",
-      borderRadius: 16,
-      border: "1px solid",
       fontFamily: "'DM Sans', sans-serif",
       opacity: dimmed ? 0.25 : 1,
       boxShadow: highlighted ? "0 2px 12px rgba(0,0,0,0.10)" : hovered ? "0 8px 24px rgba(0,0,0,0.12)" : "none",
       transform: highlighted ? "translateY(-2px)" : hovered ? "translateY(-3px) scale(1.03)" : "none",
       borderColor: hovered && !highlighted ? "var(--border-strong)" : undefined,
-      transition: "all 0.3s",
-      padding: 16,
     }}
   >
-    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
-      <h4 style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.375 }}>{c.title}</h4>
-      <span style={{ fontSize: 12, paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, border: "1px solid", fontWeight: 500, flexShrink: 0, ...sectorStyle }}>{c.sector}</span>
+    <div className="flex items-start justify-between gap-2 mb-2">
+      <h4 className="text-sm font-semibold leading-snug">{c.title}</h4>
+      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${SECTOR_COLOR[c.sector] || "bg-stone-50 text-stone-600 border-stone-200"}`}>{c.sector}</span>
     </div>
-    <p className="line-clamp-1" style={{ fontSize: 12, marginBottom: 8, color: "var(--text-muted)" }}>{c.measure}</p>
-    <p style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>{c.hook}</p>
+    <p className="measure text-xs mb-2 line-clamp-1">{c.measure}</p>
+    <p className="hook text-xs font-semibold">{c.hook}</p>
   </div>
   );
 };
@@ -405,8 +382,6 @@ const Marquee2D = ({ cases, onCardClick, matchingSectors, matchingHazards, hasFi
   const half = Math.ceil(cases.length / 2);
   const rowA = cases.slice(0, half);
   const rowB = cases.slice(half);
-  const trackARef = useRef<HTMLDivElement>(null);
-  const trackBRef = useRef<HTMLDivElement>(null);
 
   const isHighlighted = (c) => {
     if (!hasFilters) return false;
@@ -417,14 +392,14 @@ const Marquee2D = ({ cases, onCardClick, matchingSectors, matchingHazards, hasFi
   const isDimmed = (c) => hasFilters && !isHighlighted(c);
 
   return (
-    <div style={{ position: "relative", paddingTop: 24, paddingBottom: 24, overflow: "visible" }}>
-      <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px", marginBottom: "4px" }} onMouseEnter={() => { if (trackARef.current) trackARef.current.style.animationPlayState = "paused"; }} onMouseLeave={() => { if (trackARef.current) trackARef.current.style.animationPlayState = "running"; }}>
-        <div ref={trackARef} style={{ display: "flex", gap: 12, width: "max-content", animation: "scrollX 160s linear infinite" }}>
+    <div className="relative py-6" style={{ overflow: "visible" }}>
+      <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px", marginBottom: "4px" }} onMouseEnter={e => e.currentTarget.querySelector('.track-a').style.animationPlayState = 'paused'} onMouseLeave={e => e.currentTarget.querySelector('.track-a').style.animationPlayState = 'running'}>
+        <div className="track-a flex gap-3" style={{ width: "max-content", animation: "scrollX 160s linear infinite" }}>
           {[...rowA, ...rowA].map((c, i) => <MarqueeCard key={`a-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />)}
         </div>
       </div>
-      <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px" }} onMouseEnter={() => { if (trackBRef.current) trackBRef.current.style.animationPlayState = "paused"; }} onMouseLeave={() => { if (trackBRef.current) trackBRef.current.style.animationPlayState = "running"; }}>
-        <div ref={trackBRef} style={{ display: "flex", gap: 12, width: "max-content", animation: "scrollX 185s linear infinite reverse" }}>
+      <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px" }} onMouseEnter={e => e.currentTarget.querySelector('.track-b').style.animationPlayState = 'paused'} onMouseLeave={e => e.currentTarget.querySelector('.track-b').style.animationPlayState = 'running'}>
+        <div className="track-b flex gap-3" style={{ width: "max-content", animation: "scrollX 185s linear infinite reverse" }}>
           {[...rowB, ...rowB].map((c, i) => <MarqueeCard key={`b-${i}`} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />)}
         </div>
       </div>
@@ -481,7 +456,7 @@ const VelocityRow = ({ cases, onCardClick, isHighlighted, isDimmed, direction = 
 
   return (
     <div style={{ overflow: "hidden", paddingTop: "12px", paddingBottom: "12px" }}>
-      <div ref={trackRef} style={{ display: "flex", gap: 12, width: "max-content", willChange: "transform" }}>
+      <div ref={trackRef} className="flex gap-3" style={{ width: "max-content", willChange: "transform" }}>
         {[...cases, ...cases].map((c, i) => (
           <MarqueeCard key={i} c={c} onClick={onCardClick} dimmed={isDimmed(c)} highlighted={isHighlighted(c)} />
         ))}
@@ -504,7 +479,7 @@ const ScrollVelocityMarquee = ({ cases, onCardClick, matchingSectors, matchingHa
   const isDimmed = (c) => hasFilters && !isHighlighted(c);
 
   return (
-    <div style={{ position: "relative", paddingTop: 16, paddingBottom: 16 }}>
+    <div className="relative py-4">
       <VelocityRow cases={rowA} onCardClick={onCardClick} isHighlighted={isHighlighted} isDimmed={isDimmed} direction={1} />
       <VelocityRow cases={rowB} onCardClick={onCardClick} isHighlighted={isHighlighted} isDimmed={isDimmed} direction={-1} />
     </div>
@@ -513,24 +488,25 @@ const ScrollVelocityMarquee = ({ cases, onCardClick, matchingSectors, matchingHa
 
 // ── SHARED COMPONENTS ──
 
-const TransferabilityBadge = ({ level }) => {
-  const isHigh = level === "High";
-  const bg = isHigh ? "#d1fae5" : "#fef3c7";
-  const text = isHigh ? "#065f46" : "#92400e";
-  const dot = isHigh ? "#10b981" : "#f59e0b";
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, background: bg, color: text }}>
-      <span style={{ width: 6, height: 6, borderRadius: 9999, background: dot }} />
-      {level} UK transferability
-    </span>
-  );
-};
+const TransferabilityBadge = ({ level }) => (
+  <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${level === "High" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+    <span className={`w-1.5 h-1.5 rounded-full ${level === "High" ? "bg-emerald-500" : "bg-amber-500"}`} />
+    {level} UK transferability
+  </span>
+);
 
 const HazardBadge = ({ hazard, type }) => {
-  const style = type === "cause" ? (HAZARD_CAUSE_STYLES[hazard] || DEFAULT_HAZARD_STYLE) : EFFECT_STYLE;
+  const causeColors = {
+    "Heavy rainfall": "bg-blue-50 text-blue-700 border-blue-200",
+    "High temperatures": "bg-orange-50 text-orange-700 border-orange-200",
+    "Storms": "bg-purple-50 text-purple-700 border-purple-200",
+    "Sea level rise": "bg-teal-50 text-teal-700 border-teal-200",
+    "Drought": "bg-amber-50 text-amber-700 border-amber-200",
+    "Freeze-thaw": "bg-sky-50 text-sky-700 border-sky-200",
+  };
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", border: "1px solid", borderRadius: 6, fontSize: 12, fontWeight: 500, paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, ...style }}>
-      {type === "effect" && <span style={{ marginRight: 4, opacity: 0.4 }}>→</span>}
+    <span className={`inline-flex items-center border rounded text-xs font-medium px-2 py-0.5 ${type === "cause" ? (causeColors[hazard] || "bg-gray-50 text-gray-600 border-gray-200") : "bg-stone-50 text-stone-600 border-stone-200"}`}>
+      {type === "effect" && <span className="mr-1 opacity-40">→</span>}
       {hazard}
     </span>
   );
@@ -538,95 +514,67 @@ const HazardBadge = ({ hazard, type }) => {
 
 const FilterPill = ({ label, selected, onClick, color }) => (
   <button onClick={onClick}
-    style={{
-      fontSize: 12,
-      paddingLeft: 12,
-      paddingRight: 12,
-      paddingTop: 6,
-      paddingBottom: 6,
-      borderRadius: 9999,
-      whiteSpace: "nowrap",
-      transition: "all 0.2s",
-      fontWeight: 500,
-      border: "1px solid",
-      ...(selected
-        ? { background: color === "emerald" ? "var(--accent)" : color === "indigo" ? "#4338ca" : "var(--text-primary)", color: "#fff", borderColor: color === "emerald" ? "var(--accent)" : color === "indigo" ? "#4338ca" : "var(--text-primary)" }
-        : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-secondary)" }),
-    }}>
-    {selected && <span style={{ marginRight: 4, opacity: 0.7 }}>✓</span>}
+    className="text-xs px-3 py-1.5 rounded-full whitespace-nowrap transition-all font-medium border"
+    style={selected
+      ? { background: color === 'emerald' ? 'var(--accent)' : color === 'indigo' ? '#4338ca' : 'var(--text-primary)', color: '#fff', borderColor: color === 'emerald' ? 'var(--accent)' : color === 'indigo' ? '#4338ca' : 'var(--text-primary)' }
+      : { background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+    {selected && <span className="mr-1 opacity-70">✓</span>}
     {label}
   </button>
 );
 
 const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => (
   <div onClick={() => onClick(cs)}
-    className="hive-card"
-    style={{
-      cursor: "pointer",
-      borderRadius: 16,
-      border: "1px solid",
-      transition: "all 0.2s",
-      padding: 20,
-      display: "flex",
-      flexDirection: "column",
-      fontFamily: "'DM Sans', sans-serif",
-    }}>
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)" }}>{cs.sector}</span>
-          <span style={{ color: "var(--text-muted)" }}>·</span>
-          <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{cs.location}</span>
-          <span style={{ color: "var(--text-muted)" }}>·</span>
-          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{cs.year}</span>
+    className="group hive-card cursor-pointer rounded-2xl border transition-all duration-200 p-5 flex flex-col"
+    style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="flex items-start gap-3 mb-1">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span className="text-xs font-semibold uppercase tracking-widest t-accent">{cs.sector}</span>
+          <span className="t-text-muted">·</span>
+          <span className="text-xs t-text-sec">{cs.location}</span>
+          <span className="t-text-muted">·</span>
+          <span className="text-xs t-text-muted">{cs.year}</span>
         </div>
-        <h3 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.375, transition: "color 0.2s" }}>{cs.title}</h3>
+        <h3 className="text-base font-semibold leading-snug transition-colors">{cs.title}</h3>
       </div>
     </div>
-    <p style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", marginBottom: 8 }}>{cs.hook}</p>
-    <p className="line-clamp-2" style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: 12, flex: 1 }}>{cs.summary}</p>
+    <p className="text-xs font-semibold t-accent mb-2">{cs.hook}</p>
+    <p className="text-sm t-text-sec leading-relaxed mb-3 line-clamp-2 flex-1">{cs.summary}</p>
     {matchReasons && matchReasons.length > 0 && (
-      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Matched on:</span>
-        {matchReasons.map(r => <span key={r} style={{ fontSize: 12, background: "var(--accent-bg)", color: "var(--accent-text)", border: "1px solid", borderColor: "var(--accent)", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 6, fontWeight: 500 }}>{r}</span>)}
+      <div className="flex items-center gap-1.5 flex-wrap mb-2">
+        <span className="text-xs t-text-muted">Matched on:</span>
+        {matchReasons.map(r => <span key={r} className="text-xs t-accent-bg t-accent-text border px-1.5 py-0.5 rounded font-medium" style={{ borderColor: 'var(--accent)' }}>{r}</span>)}
       </div>
     )}
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+    <div className="flex flex-wrap gap-1.5 mb-3">
       {cs.hazards.cause.slice(0, 2).map(h => <HazardBadge key={h} hazard={h} type="cause" />)}
       {cs.hazards.effect.slice(0, 2).map(h => <HazardBadge key={h} hazard={h} type="effect" />)}
     </div>
-    <div style={{ background: "var(--accent-bg)", border: "1px solid", borderColor: "var(--accent)", borderRadius: 12, paddingLeft: 12, paddingRight: 12, paddingTop: 8, paddingBottom: 8, marginBottom: 12, opacity: 0.85 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-        <svg style={{ width: 12, height: 12, flexShrink: 0, color: "var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)" }}>UK applicability</span>
+    <div className="t-accent-bg border rounded-xl px-3 py-2 mb-3" style={{ borderColor: 'var(--accent)', opacity: 0.85 }}>
+      <div className="flex items-center gap-1.5 mb-1">
+        <svg className="w-3 h-3 flex-shrink-0 t-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: 'var(--accent)' }}>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        </svg>
+        <span className="text-xs font-semibold t-accent">UK applicability</span>
       </div>
-      <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.625 }}>{cs.transferabilityNote}</p>
+      <p className="text-xs t-text-sec leading-relaxed">{cs.transferabilityNote}</p>
     </div>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4, borderTop: "1px solid", borderColor: "var(--border)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div className="flex items-center justify-between pt-1 border-t t-border">
+      <div className="flex items-center gap-2">
         <TransferabilityBadge level={cs.transferability} />
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{cs.costBand}</span>
+        <span className="text-xs t-text-muted">{cs.costBand}</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div className="flex items-center gap-2">
         <button
           onClick={e => { e.stopPropagation(); onAddToBrief(cs); }}
-          style={{
-            fontSize: 12,
-            fontWeight: 500,
-            paddingLeft: 10,
-            paddingRight: 10,
-            paddingTop: 4,
-            paddingBottom: 4,
-            borderRadius: 9999,
-            border: "1px solid",
-            transition: "all 0.2s",
-            ...(inBrief ? { background: "var(--accent)", color: "#fff", borderColor: "var(--accent)" } : { borderColor: "var(--border)", color: "var(--text-secondary)" }),
-          }}>
+          className="text-xs font-medium px-2.5 py-1 rounded-full border transition-all"
+          style={inBrief ? { background: 'var(--accent)', color: '#fff', borderColor: 'var(--accent)' } : { borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
           {inBrief ? "✓ In brief" : "+ Add to brief"}
         </button>
-        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--accent)", display: "flex", alignItems: "center", gap: 4, transition: "all 0.2s" }}>
+        <span className="text-xs font-medium t-accent flex items-center gap-1 group-hover:gap-1.5 transition-all" style={{ color: 'var(--accent)' }}>
           Full case
-          <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </span>
       </div>
     </div>
@@ -634,76 +582,67 @@ const CaseStudyCard = ({ cs, onClick, matchReasons, onAddToBrief, inBrief }) => 
 );
 
 const CaseStudyDetail = ({ cs, onClose, onAddToBrief, inBrief }) => (
-  <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-    <div className="hive-modal" style={{ borderRadius: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", maxWidth: 672, width: "100%", maxHeight: "88vh", overflowY: "auto", fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
-      <div className="hive-modal" style={{ position: "sticky", top: 0, backdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)", paddingLeft: 24, paddingRight: 24, paddingTop: 16, paddingBottom: 16, display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
-        <div style={{ flex: 1, paddingRight: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)" }}>{cs.sector}</span>
-            <span style={{ color: "var(--text-muted)" }}>·</span>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{cs.location}</span>
+  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div className="hive-modal rounded-3xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto" style={{ fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
+      <div className="sticky top-0 hive-modal backdrop-blur border-b px-6 py-4 flex items-start justify-between rounded-t-3xl" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex-1 pr-4">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="text-xs font-semibold uppercase tracking-widest text-emerald-700">{cs.sector}</span>
+            <span className="text-stone-300">·</span>
+            <span className="text-xs text-stone-500">{cs.location}</span>
           </div>
-          <h2 style={{ fontSize: 20, fontWeight: 400, color: "var(--text-primary)", lineHeight: 1.25, fontFamily: "'DM Serif Display', serif" }}>{cs.title}</h2>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--accent)", marginTop: 4 }}>{cs.hook}</p>
+          <h2 className="text-xl font-normal text-stone-900 leading-tight" style={{ fontFamily: "'DM Serif Display', serif" }}>{cs.title}</h2>
+          <p className="text-sm font-semibold text-emerald-700 mt-1">{cs.hook}</p>
         </div>
-        <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 9999, background: "var(--surface-alt)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s, color 0.2s", flexShrink: 0, marginTop: 4 }}>
-          <svg style={{ width: 16, height: 16, color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        <button onClick={onClose} className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition-colors flex-shrink-0 mt-1">
+          <svg className="w-4 h-4 text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
-      <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ background: "var(--accent-bg)", border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", borderRadius: 16, padding: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <svg style={{ width: 16, height: 16, color: "var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)" }}>Key insight</span>
+      <div className="p-6 space-y-5">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Key insight</span>
           </div>
-          <p style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.625, fontWeight: 500 }}>{cs.insight}</p>
+          <p className="text-sm text-stone-800 leading-relaxed font-medium">{cs.insight}</p>
         </div>
-        <div style={{ background: "var(--surface-alt)", borderRadius: 16, padding: 16 }}>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625 }}>{cs.summary}</p>
+        <div className="bg-stone-50 rounded-2xl p-4">
+          <p className="text-sm text-stone-700 leading-relaxed">{cs.summary}</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Climate drivers</h4>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{cs.hazards.cause.map(h => <HazardBadge key={h} hazard={h} type="cause" />)}</div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Climate drivers</h4>
+            <div className="flex flex-wrap gap-1.5">{cs.hazards.cause.map(h => <HazardBadge key={h} hazard={h} type="cause" />)}</div>
           </div>
           <div>
-            <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Impacts</h4>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{cs.hazards.effect.map(h => <HazardBadge key={h} hazard={h} type="effect" />)}</div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Impacts</h4>
+            <div className="flex flex-wrap gap-1.5">{cs.hazards.effect.map(h => <HazardBadge key={h} hazard={h} type="effect" />)}</div>
           </div>
         </div>
         <div>
-          <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 8 }}>Adaptation measures</h4>
-          <ul style={{ display: "flex", flexDirection: "column", gap: 6 }}>{cs.measures.map(m => <li key={m} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, color: "var(--text-secondary)" }}><span style={{ width: 6, height: 6, borderRadius: 9999, background: "var(--accent)", flexShrink: 0, marginTop: 6 }} />{m}</li>)}</ul>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Adaptation measures</h4>
+          <ul className="space-y-1.5">{cs.measures.map(m => <li key={m} className="flex items-start gap-2 text-sm text-stone-700"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0 mt-1.5" />{m}</li>)}</ul>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div style={{ background: "var(--surface-alt)", borderRadius: 12, padding: 12, border: "1px solid var(--border)" }}>
-            <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>Investment</h4>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>{cs.cost}</p>
-            <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>Band: {cs.costBand}</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-stone-50 rounded-xl p-3 border border-stone-100">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Investment</h4>
+            <p className="text-sm font-medium text-stone-800">{cs.cost}</p>
+            <p className="text-xs text-stone-400 mt-0.5">Band: {cs.costBand}</p>
           </div>
-          <div style={{ background: "var(--surface-alt)", borderRadius: 12, padding: 12, border: "1px solid var(--border)" }}>
-            <h4 style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 4 }}>Delivery period</h4>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>{cs.year}</p>
+          <div className="bg-stone-50 rounded-xl p-3 border border-stone-100">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-1">Delivery period</h4>
+            <p className="text-sm font-medium text-stone-800">{cs.year}</p>
           </div>
         </div>
-        <div style={{ border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", borderRadius: 12, padding: 16, background: "color-mix(in srgb, var(--accent-bg) 50%, transparent)" }}>
-          <div style={{ marginBottom: 8 }}><TransferabilityBadge level={cs.transferability} /></div>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625, marginBottom: 12 }}>{cs.transferabilityNote}</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{cs.ukApplicability.map(a => <span key={a} style={{ fontSize: 12, background: "var(--surface)", border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", color: "var(--accent-text)", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500 }}>{a}</span>)}</div>
+        <div className="border border-emerald-200 rounded-xl p-4 bg-emerald-50/50">
+          <div className="mb-2"><TransferabilityBadge level={cs.transferability} /></div>
+          <p className="text-sm text-stone-700 leading-relaxed mb-3">{cs.transferabilityNote}</p>
+          <div className="flex flex-wrap gap-1.5">{cs.ukApplicability.map(a => <span key={a} className="text-xs bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full font-medium">{a}</span>)}</div>
         </div>
-        <p style={{ fontSize: 12, color: "var(--text-muted)", paddingTop: 4, borderTop: "1px solid var(--border)" }}>Ref: {cs.id} · {cs.organisation} · Curated & verified by HIVE</p>
+        <p className="text-xs text-stone-400 pt-1 border-t border-stone-100">Ref: {cs.id} · {cs.organisation} · Curated & verified by HIVE</p>
         <button
           onClick={() => { onAddToBrief(cs); onClose(); }}
-          style={{
-            width: "100%",
-            paddingTop: 12,
-            paddingBottom: 12,
-            borderRadius: 16,
-            fontSize: 14,
-            fontWeight: 600,
-            transition: "all 0.2s",
-            ...(inBrief ? { background: "var(--surface-alt)", color: "var(--text-muted)", border: "1px solid var(--border)" } : { background: "var(--accent)", color: "#fff", border: "none" }),
-          }}>
+          className={`w-full py-3 rounded-2xl text-sm font-semibold transition-all ${inBrief ? "bg-stone-100 text-stone-500 border border-stone-200" : "bg-emerald-700 text-white hover:bg-emerald-800"}`}>
           {inBrief ? "✓ Already in your AI brief" : "＋ Add to AI brief"}
         </button>
       </div>
@@ -711,45 +650,46 @@ const CaseStudyDetail = ({ cs, onClose, onAddToBrief, inBrief }) => (
   </div>
 );
 
-const SynthesisPanel = ({ synthesis, themeKey = "light", resultIds = [] }: { synthesis: { count: number; sectors: string[]; highTransferCount: number; insightSentence: string; allCause: string[]; commonMeasures: string[] }; themeKey?: string; resultIds?: string[] }) => (
-  <div style={{ borderRadius: 16, border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", background: "linear-gradient(to bottom right, var(--accent-bg), color-mix(in srgb, #99f6e4 40%, transparent))", padding: 20, marginBottom: 20, fontFamily: "'DM Sans', sans-serif" }}>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 24, height: 24, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <svg style={{ width: 14, height: 14, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+const SynthesisPanel = ({ synthesis }) => (
+  <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50/40 p-5 mb-5" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-lg bg-emerald-600 flex items-center justify-center flex-shrink-0">
+          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
         </div>
-        <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)" }}>Cross-case analysis</span>
-        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{synthesis.count} case {synthesis.count === 1 ? "study" : "studies"}</span>
+        <span className="text-xs font-semibold uppercase tracking-widest text-emerald-700">Cross-case analysis</span>
+        <span className="text-xs text-stone-400">{synthesis.count} case {synthesis.count === 1 ? "study" : "studies"}</span>
       </div>
-      <span className="show-from-sm-block" style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>Indicative — review sources directly</span>
+      <span className="text-xs text-stone-400 italic hidden sm:block">Indicative — review sources directly</span>
     </div>
-    <p style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.625, marginBottom: 16, fontWeight: 500 }}>{synthesis.insightSentence}</p>
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+    <p className="text-sm text-stone-800 leading-relaxed mb-4 font-medium">{synthesis.insightSentence}</p>
+    <div className="grid grid-cols-2 gap-3 mb-3">
       {synthesis.allCause.length > 0 && (
         <div>
-          <span style={{ fontSize: 12, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Climate drivers</span>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>{synthesis.allCause.map(h => <HazardBadge key={h} hazard={h} type="cause" />)}</div>
+          <span className="text-xs text-stone-400 uppercase tracking-wider block mb-1.5">Climate drivers</span>
+          <div className="flex flex-wrap gap-1">{synthesis.allCause.map(h => <HazardBadge key={h} hazard={h} type="cause" />)}</div>
         </div>
       )}
       {synthesis.commonMeasures.length > 0 && (
         <div>
-          <span style={{ fontSize: 12, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Common measures</span>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>{synthesis.commonMeasures.slice(0, 3).map(m => <span key={m} style={{ fontSize: 12, background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-secondary)", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 6 }}>{m}</span>)}</div>
+          <span className="text-xs text-stone-400 uppercase tracking-wider block mb-1.5">Common measures</span>
+          <div className="flex flex-wrap gap-1">{synthesis.commonMeasures.slice(0, 3).map(m => <span key={m} className="text-xs bg-white border border-stone-200 text-stone-700 px-1.5 py-0.5 rounded">{m}</span>)}</div>
         </div>
       )}
     </div>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        {synthesis.sectors.map(s => <span key={s} style={{ fontSize: 12, background: "rgba(255,255,255,0.8)", border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", color: "var(--accent-text)", paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 9999, fontWeight: 500 }}>{s}</span>)}
-        <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 4 }}>{synthesis.highTransferCount} of {synthesis.count} with high UK transferability</span>
+    <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap">
+        {synthesis.sectors.map(s => <span key={s} className="text-xs bg-white/80 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-full font-medium">{s}</span>)}
+        <span className="text-xs text-stone-400 ml-1">{synthesis.highTransferCount} of {synthesis.count} with high UK transferability</span>
       </div>
-      <Link
-        href={`/handbook/brief?theme=${themeKey}&ids=${resultIds.join(",")}`}
-        style={{ fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 8, flexShrink: 0, transition: "all 0.2s", background: "#065f46", color: "#fff", textDecoration: "none" }}
+      {/* Link 3 — filtered brief from this analysis */}
+      <a href="/brief" onClick={e => { e.preventDefault(); alert(`→ /brief?from=analysis\nGenerates a structured brief from these ${synthesis.count} matched cases, pre-populated with this cross-case analysis.`); }}
+        className="text-xs font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors"
+        style={{ background: '#065f46', color: '#fff' }}
         title="Generate brief from this analysis">
-        <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
         Generate brief from this analysis →
-      </Link>
+      </a>
     </div>
   </div>
 );
@@ -772,7 +712,7 @@ const HEATMAP_MATRIX = {
 };
 const HEATMAP_MAX = 7;
 
-const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogglePosition, themeKey = "light", onCellClick }: { activeSectors?: string[]; activeHazards?: string[]; position: string; onTogglePosition: (pos: string) => void; themeKey?: string; onCellClick?: (sector: string, hazardId: string) => void }) => {
+const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogglePosition }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
 
   // normalise active context to heatmap IDs
@@ -802,46 +742,38 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
   };
 
   return (
-    <div style={{ borderRadius: 12, border: "1px solid", borderColor: "var(--border)", background: "var(--surface)", marginBottom: 20, overflow: "hidden" }}>
+    <div className="rounded-xl border mb-5 overflow-hidden" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
       {/* header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 16, paddingRight: 16, paddingTop: 12, paddingBottom: 12, borderBottom: "1px solid var(--border)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 4, height: 16, borderRadius: 2, flexShrink: 0, background: "#006853" }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>Adaptation options coverage</span>
-          <span className="show-from-sm-inline" style={{ fontSize: 12, color: "var(--text-muted)" }}>— click any cell to explore options for that combination</span>
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 rounded-sm flex-shrink-0" style={{ background: '#006853' }} />
+          <span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>Adaptation options coverage</span>
+          <span className="text-xs hidden sm:inline" style={{ color: 'var(--text-muted)' }}>— click any cell to explore options for that combination</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="flex items-center gap-3">
           {/* position toggle */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 8, padding: 2, border: "1px solid var(--border)", background: "var(--bg)" }}>
+          <div className="flex items-center gap-1 rounded-lg p-0.5 border" style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}>
             {["above", "below"].map(pos => (
               <button key={pos} onClick={() => onTogglePosition(pos)}
+                className="text-xs px-2.5 py-1 rounded-md transition-all font-medium capitalize"
                 style={{
-                  fontSize: 12,
-                  paddingLeft: 10,
-                  paddingRight: 10,
-                  paddingTop: 4,
-                  paddingBottom: 4,
-                  borderRadius: 6,
-                  transition: "all 0.2s",
-                  fontWeight: 500,
-                  textTransform: "capitalize",
-                  background: position === pos ? "var(--accent)" : "transparent",
-                  color: position === pos ? "#fff" : "var(--text-muted)",
+                  background: position === pos ? 'var(--accent)' : 'transparent',
+                  color: position === pos ? '#fff' : 'var(--text-muted)',
                 }}>
                 {pos}
               </button>
             ))}
           </div>
-          <Link
-            href={`/handbook/options?theme=${themeKey}`}
-            style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+          <a href="/options" onClick={e => { e.preventDefault(); alert("→ /options\nFull adaptation options library with filters"); }}
+            className="text-xs font-semibold"
+            style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
             Browse all options →
-          </Link>
+          </a>
         </div>
       </div>
 
       {/* grid */}
-      <div style={{ paddingLeft: 16, paddingRight: 16, paddingTop: 12, paddingBottom: 12, overflowX: "auto" }}>
+      <div className="px-4 py-3 overflow-x-auto">
         <table style={{ borderCollapse: 'separate', borderSpacing: '3px', width: '100%', minWidth: 460 }}>
           <thead>
             <tr>
@@ -849,19 +781,13 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
               {HEATMAP_HAZARDS.map(h => {
                 const isActive = matchedHazardIds.includes(h.id);
                 return (
-                  <th key={h.id} style={{
-                    textAlign: "center",
-                    paddingBottom: 6,
-                    fontSize: 10,
-                    fontWeight: 600,
-                    letterSpacing: "0.04em",
-                    color: isActive ? "var(--accent)" : "var(--text-muted)",
-                    whiteSpace: "nowrap",
-                    paddingLeft: 2,
-                    paddingRight: 2,
+                  <th key={h.id} className="text-center pb-1.5" style={{
+                    fontSize: 10, fontWeight: 600, letterSpacing: '0.04em',
+                    color: isActive ? 'var(--accent)' : 'var(--text-muted)',
+                    whiteSpace: 'nowrap', paddingLeft: 2, paddingRight: 2,
                   }}>
                     {h.label}
-                    {isActive && <div style={{ width: 4, height: 4, borderRadius: 9999, margin: "2px auto 0", background: "var(--accent)" }} />}
+                    {isActive && <div className="w-1 h-1 rounded-full mx-auto mt-0.5" style={{ background: 'var(--accent)' }} />}
                   </th>
                 );
               })}
@@ -872,14 +798,10 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
               const sectorMatch = matchedSectors.includes(sector);
               return (
                 <tr key={sector}>
-                  <td style={{
-                    paddingRight: 12,
-                    paddingTop: 2,
-                    paddingBottom: 2,
-                    fontSize: 12,
-                    fontWeight: sectorMatch ? 700 : 600,
-                    color: sectorMatch ? "var(--accent)" : "var(--text-secondary)",
-                    whiteSpace: "nowrap",
+                  <td className="pr-3 py-0.5" style={{
+                    fontSize: 12, fontWeight: sectorMatch ? 700 : 600,
+                    color: sectorMatch ? 'var(--accent)' : 'var(--text-secondary)',
+                    whiteSpace: 'nowrap',
                   }}>
                     {sector}
                   </td>
@@ -889,12 +811,12 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
                     const isHovered = hoveredCell === `${sector}-${h.id}`;
                     const colors = getCellColor(count, sectorMatch, hazardMatch);
                     return (
-                      <td key={h.id} style={{ textAlign: "center", padding: "2px" }}>
+                      <td key={h.id} className="text-center" style={{ padding: '2px' }}>
                         {count > 0 ? (
                           <button
                             onMouseEnter={() => setHoveredCell(`${sector}-${h.id}`)}
                             onMouseLeave={() => setHoveredCell(null)}
-                            onClick={() => onCellClick ? onCellClick(sector, h.id) : undefined}
+                            onClick={() => alert(`→ /options?sector=${sector.toLowerCase()}&hazard=${h.id}\n${count} adaptation option${count !== 1 ? 's' : ''} for ${sector} × ${h.label}`)}
                             title={`${count} option${count !== 1 ? 's' : ''} — ${sector} × ${h.label}`}
                             style={{
                               width: '100%', minWidth: 38, padding: '5px 4px',
@@ -923,14 +845,14 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
           </tbody>
         </table>
         {/* legend */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-          <span style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.06em" }}>FEWER</span>
-          {["#f0fdf4", "#d1fae5", "#bbf7d0", "#6ee7b7"].map((c, i) => (
-            <div key={i} style={{ width: 14, height: 8, background: c, borderRadius: 2, border: "1px solid #d1d5db" }} />
+        <div className="flex items-center gap-1.5 mt-2">
+          <span style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>FEWER</span>
+          {['#f0fdf4','#d1fae5','#bbf7d0','#6ee7b7'].map((c,i) => (
+            <div key={i} style={{ width: 14, height: 8, background: c, borderRadius: 2, border: '1px solid #d1d5db' }} />
           ))}
-          <span style={{ fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.06em" }}>MORE</span>
+          <span style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>MORE</span>
           {(matchedSectors.length > 0 || matchedHazardIds.length > 0) && (
-            <span style={{ marginLeft: 12, display: "flex", alignItems: "center", gap: 4, fontSize: 9, color: "var(--text-muted)" }}>
+            <span className="ml-3 flex items-center gap-1" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
               <div style={{ width: 14, height: 8, background: '#1d70b8', borderRadius: 2 }} />
               matches your current search
             </span>
@@ -942,7 +864,7 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
 };
 
 // ── MAIN COMPONENT ──
-export default function HandbookLandingPage() {
+export default function HIVEPrototypeV4() {
   const [query, setQuery] = useState("");
   const [selectedHazards, setSelectedHazards] = useState([]);
   const [selectedSectors, setSelectedSectors] = useState([]);
@@ -963,16 +885,6 @@ export default function HandbookLandingPage() {
   const [briefOpen, setBriefOpen] = useState(false);
   const inputRef = useRef(null);
   const resultsRef = useRef(null);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Sync theme from URL so brief/options back-links restore theme
-  useEffect(() => {
-    const themeFromUrl = searchParams.get("theme");
-    if (themeFromUrl === "light" || themeFromUrl === "dark" || themeFromUrl === "dft") {
-      setThemeKey(themeFromUrl);
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     if (query || selectedHazards.length || selectedSectors.length || selectedRegions.length || selectedCosts.length) {
@@ -1049,19 +961,11 @@ export default function HandbookLandingPage() {
 
   return (
     <>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" />
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
         * { box-sizing: border-box; }
         .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .show-from-sm-inline { display: none; }
-        @media (min-width: 640px) { .show-from-sm-inline { display: inline; } }
-        .show-from-sm-block { display: none; }
-        @media (min-width: 640px) { .show-from-sm-block { display: block; } }
-        .show-from-md-flex { display: none; }
-        @media (min-width: 768px) { .show-from-md-flex { display: flex; } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes scrollX { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         @keyframes scrollY { from { transform: translateY(0); } to { transform: translateY(-50%); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -1070,7 +974,7 @@ export default function HandbookLandingPage() {
         .fade-in { animation: fadeIn 0.25s ease forwards; }
         .card-enter { animation: fadeUp 0.3s ease forwards; }
 
-        .hive-root {
+        :root {
           --bg: ${T.bg};
           --surface: ${T.surface};
           --surface-alt: ${T.surfaceAlt};
@@ -1173,174 +1077,156 @@ export default function HandbookLandingPage() {
         .hive-root .border-emerald-200 { border-color: color-mix(in srgb, var(--accent) 50%, transparent) !important; }
       `}</style>
 
-      <div className="hive-root" style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
+      <div className="min-h-screen hive-root" style={{ background: T.bg, fontFamily: "'DM Sans', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
 
         {/* Nav — DfT theme: green stripe at top per GOV.UK / DfT branding */}
-        {themeKey === "dft" && <div aria-hidden="true" style={{ height: "5px", background: "#006853", position: "relative", zIndex: 41 }} />}
-        <nav style={{ position: "sticky", top: 0, zIndex: 40, borderBottom: "1px solid", borderColor: T.border, background: T.navBg, backdropFilter: "blur(12px)" }}>
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: T.accent }}>
-                <svg style={{ width: 16, height: 16, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {themeKey === 'dft' && <div aria-hidden="true" style={{ height: '5px', background: '#006853', position: 'relative', zIndex: 41 }} />}
+        <nav className="sticky top-0 z-40 border-b backdrop-blur-md" style={{ background: T.navBg, borderColor: T.border }}>
+          <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: T.accent }}>
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
                 </svg>
               </div>
-              <span style={{ fontWeight: 600, letterSpacing: "-0.025em", color: T.textPrimary }}>HIVE</span>
-              <span className="show-from-sm-block" style={{ fontSize: 12, color: T.textMuted }}>Transport Climate Adaptation Intelligence</span>
+              <span className="font-semibold tracking-tight" style={{ color: T.textPrimary }}>HIVE</span>
+              <span className="text-xs hidden sm:block" style={{ color: T.textMuted }}>Transport Climate Adaptation Intelligence</span>
             </div>
             {/* Theme picker */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="show-from-sm-block" style={{ fontSize: 12, color: T.textMuted }}>Theme:</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid", borderColor: T.border, background: T.surfaceAlt }}>
+            <div className="flex items-center gap-2">
+              <span className="text-xs hidden sm:block" style={{ color: T.textMuted }}>Theme:</span>
+              <div className="flex items-center gap-1 rounded-full p-0.5 border" style={{ borderColor: T.border, background: T.surfaceAlt }}>
                 {Object.values(THEMES).map(th => (
                   <button key={th.key} onClick={() => setThemeKey(th.key)}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
                     style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      paddingLeft: 12,
-                      paddingRight: 12,
-                      paddingTop: 6,
-                      paddingBottom: 6,
-                      borderRadius: 9999,
-                      transition: "all 0.2s",
-                      background: themeKey === th.key ? T.accent : "transparent",
-                      color: themeKey === th.key ? "#ffffff" : T.textSecondary,
+                      background: themeKey === th.key ? T.accent : 'transparent',
+                      color: themeKey === th.key ? '#ffffff' : T.textSecondary,
                     }}>
                     {th.label}
                   </button>
                 ))}
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div className="flex items-center gap-1">
               <button onClick={() => { clearAll(); inputRef.current?.focus(); }}
-                className="show-from-md-flex"
-                style={{ fontSize: 14, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", alignItems: "center", gap: 6, color: T.textSecondary }}>
-                <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                className="text-sm px-3 py-1.5 rounded-full transition-all hidden md:flex items-center gap-1.5"
+                style={{ color: T.textSecondary }}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 Search
               </button>
-              <a
-                href={brief.length === 0 ? "/handbook/brief" : "#"}
-                className="show-from-md-flex"
-                onClick={(e) => {
-                  if (brief.length > 0) {
-                    e.preventDefault();
-                    sessionStorage.setItem("hiveBriefCases", JSON.stringify(brief.map((c: { id: string }) => c.id)));
-                    sessionStorage.setItem("hiveBriefTheme", themeKey);
-                    window.location.href = "/handbook/brief?tutorial=false";
-                  }
-                }}
-                style={{ fontSize: 14, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", alignItems: "center", gap: 6, color: brief.length > 0 ? T.accent : T.textSecondary, fontWeight: brief.length > 0 ? 600 : 400, textDecoration: "none", display: "flex" }}>
-                <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <button
+                onClick={() => setBriefOpen(true)}
+                className="text-sm px-3 py-1.5 rounded-full transition-all hidden md:flex items-center gap-1.5"
+                style={{ color: brief.length > 0 ? T.accent : T.textSecondary, fontWeight: brief.length > 0 ? 600 : 400 }}>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 AI Brief
                 {brief.length > 0 && (
-                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, marginLeft: 4, background: T.accent }}>{brief.length}</span>
+                  <span className="text-white text-xs font-semibold px-1.5 py-0.5 rounded-full ml-1" style={{ background: T.accent }}>{brief.length}</span>
                 )}
-              </a>
-              <button style={{ fontSize: 14, fontWeight: 500, color: "#fff", paddingLeft: 16, paddingRight: 16, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "background 0.2s, color 0.2s", marginLeft: 8, background: T.accent }}>DfT Partner</button>
+              </button>
+              <button className="text-sm font-medium text-white px-4 py-1.5 rounded-full transition-colors ml-2" style={{ background: T.accent }}>DfT Partner</button>
             </div>
           </div>
         </nav>
 
         {/* Hero */}
-        <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingTop: 56, paddingBottom: 24 }}>
-          <div className="fade-up" style={{ maxWidth: 768 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, marginBottom: 20, letterSpacing: "0.05em", textTransform: "uppercase", background: T.accentBg, color: T.accentText }}>
-              <span className="animate-pulse" style={{ width: 6, height: 6, borderRadius: 9999, background: T.accent }} />
+        <div className="max-w-6xl mx-auto px-6 pt-14 pb-6">
+          <div className="max-w-3xl fade-up">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-5 uppercase tracking-widest" style={{ background: T.accentBg, color: T.accentText }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: T.accent }} />
               Prototype · 7 of 80+ case studies fully loaded
             </div>
-            <h1 style={{ fontSize: "2.25rem", fontWeight: 400, lineHeight: 1.25, marginBottom: 12, fontFamily: "'DM Serif Display', serif", color: T.textPrimary }}>
+            <h1 className="text-4xl sm:text-5xl font-normal leading-tight mb-3" style={{ fontFamily: "'DM Serif Display', serif", color: T.textPrimary }}>
               What risk are you
-              <span style={{ fontStyle: "italic", color: T.accent }}> managing?</span>
+              <span className="italic" style={{ color: T.accent }}> managing?</span>
             </h1>
-            <p style={{ fontSize: 16, marginBottom: 24, maxWidth: 576, lineHeight: 1.625, color: T.textSecondary }}>
+            <p className="text-base mb-6 max-w-xl leading-relaxed" style={{ color: T.textSecondary }}>
               Describe your infrastructure challenge in plain English. HIVE surfaces proven adaptations, comparable case studies, and structured evidence you can use immediately.
             </p>
           </div>
 
           {/* Search */}
-          <div className="fade-up" style={{ maxWidth: 768, animationDelay: "0.1s" }}>
-            <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}>
-                <svg style={{ width: 20, height: 20 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <div className="max-w-3xl fade-up" style={{ animationDelay: "0.1s" }}>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               </div>
               <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
                 placeholder="e.g. flooding on a rail corridor, heatwave on road bridges, coastal port storm surge..."
-                className="hive-input"
-                style={{ width: "100%", paddingLeft: 44, paddingRight: 40, paddingTop: 16, paddingBottom: 16, fontSize: 16, borderRadius: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1.5px solid var(--input-border)", transition: "all 0.2s" }} />
+                className="hive-input w-full pl-11 pr-10 py-4 text-base rounded-2xl shadow-sm focus:outline-none transition-all"
+                style={{ border: '1.5px solid var(--input-border)' }} />
               {query && (
-                <button onClick={() => setQuery("")} style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}>
-                  <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <button onClick={() => setQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               )}
             </div>
             {!query && (
-              <p style={{ fontSize: 12, marginTop: 12, fontStyle: "italic", color: "var(--text-muted)" }}>Describe your challenge — location, asset type, climate risk</p>
+              <p className="text-xs mt-3 italic" style={{ color: 'var(--text-muted)' }}>Describe your challenge — location, asset type, climate risk</p>
             )}
           </div>
 
           {/* Filters */}
-          <div className="fade-up" style={{ marginTop: 20, maxWidth: 768, animationDelay: "0.15s", display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-              <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Search describes your situation. Filters narrow by category. Both work together.</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                <Link
-                  href="/handbook/cases"
-                  style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 6, border: "1px solid", borderColor: "var(--border)", background: "var(--surface)", color: "var(--text-secondary)", transition: "all 0.2s", textDecoration: "none" }}
+          <div className="mt-5 max-w-3xl space-y-3 fade-up" style={{ animationDelay: "0.15s" }}>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Search describes your situation. Filters narrow by category. Both work together.</p>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* All cases — unfiltered browse */}
+                <a href="/cases" onClick={e => { e.preventDefault(); alert("→ /cases\nBrowse all 109 case studies (no filters applied)"); }}
+                  className="text-xs font-medium flex items-center gap-1 px-2.5 py-1 rounded-md border transition-colors"
+                  style={{ color: 'var(--text-secondary)', borderColor: 'var(--border)', background: 'var(--surface)' }}
                   title="Browse all case studies">
-                  <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                   All cases
-                </Link>
-                <Link
-                  href="/handbook/cases"
-                  style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none" }}
-                  title="Case study library">
-                  Case Studies →
-                </Link>
-                <Link
-                  href={`/handbook/brief?theme=${themeKey}`}
-                  style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 6, border: "1px solid", borderColor: "var(--accent)", background: "var(--surface)", color: "var(--accent)", transition: "all 0.2s", textDecoration: "none" }}
+                </a>
+                {/* Brief mode — tutorial/default brief */}
+                <a href="/brief" onClick={e => { e.preventDefault(); alert("→ /brief\nOpens Brief mode with a tutorial brief explaining each section.\nUse '+ Add to brief' on any case to build your own."); }}
+                  className="text-xs font-medium flex items-center gap-1 px-2.5 py-1 rounded-md border transition-colors"
+                  style={{ color: 'var(--accent)', borderColor: 'var(--accent)', background: 'var(--surface)' }}
                   title="Open Brief mode">
-                  <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   Brief mode
-                </Link>
+                </a>
+                {/* Show/hide filters */}
                 <button onClick={() => setFiltersOpen(!filtersOpen)}
-                  style={{ fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s", color: "var(--accent)" }}>
+                  className="text-xs font-medium flex items-center gap-1 transition-colors" style={{ color: 'var(--accent)' }}>
                   {filtersOpen ? "Hide filters" : "Show filters"}
-                  {activeFilterCount > 0 && <span style={{ color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, marginLeft: 4, background: "var(--accent)" }}>{activeFilterCount}</span>}
-                  <svg style={{ width: 12, height: 12, transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  {activeFilterCount > 0 && <span className="text-white px-1.5 py-0.5 rounded-full ml-1" style={{ background: 'var(--accent)' }}>{activeFilterCount}</span>}
+                  <svg className={`w-3 h-3 transition-transform ${filtersOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </button>
               </div>
             </div>
             {filtersOpen && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div className="space-y-3">
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-secondary)" }}>Climate driver</span>
-                    {selectedHazards.length > 0 && <span style={{ fontSize: 12, color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500, background: "var(--accent)" }}>{selectedHazards.length}</span>}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Climate driver</span>
+                    {selectedHazards.length > 0 && <span className="text-xs text-white px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'var(--accent)' }}>{selectedHazards.length}</span>}
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{HAZARDS_CAUSE.map(h => <FilterPill key={h} label={h} selected={selectedHazards.includes(h)} onClick={() => toggle(setSelectedHazards, h)} color="emerald" />)}</div>
+                  <div className="flex gap-2 flex-wrap">{HAZARDS_CAUSE.map(h => <FilterPill key={h} label={h} selected={selectedHazards.includes(h)} onClick={() => toggle(setSelectedHazards, h)} color="emerald" />)}</div>
                 </div>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-secondary)" }}>Transport sector</span>
-                    {selectedSectors.length > 0 && <span style={{ fontSize: 12, color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500, background: "var(--text-primary)" }}>{selectedSectors.length}</span>}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Transport sector</span>
+                    {selectedSectors.length > 0 && <span className="text-xs text-white px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'var(--text-primary)' }}>{selectedSectors.length}</span>}
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{SECTORS.map(s => <FilterPill key={s} label={s} selected={selectedSectors.includes(s)} onClick={() => toggle(setSelectedSectors, s)} color="stone" />)}</div>
+                  <div className="flex gap-2 flex-wrap">{SECTORS.map(s => <FilterPill key={s} label={s} selected={selectedSectors.includes(s)} onClick={() => toggle(setSelectedSectors, s)} color="stone" />)}</div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+                <div className="space-y-3 pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-secondary)" }}>UK geography</span>
-                      {selectedRegions.length > 0 && <span style={{ fontSize: 12, background: "#4338ca", color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500 }}>{selectedRegions.length}</span>}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>UK geography</span>
+                      {selectedRegions.length > 0 && <span className="text-xs bg-indigo-700 text-white px-1.5 py-0.5 rounded-full font-medium">{selectedRegions.length}</span>}
                     </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{UK_REGIONS.map(r => <FilterPill key={r} label={r} selected={selectedRegions.includes(r)} onClick={() => toggle(setSelectedRegions, r)} color="indigo" />)}</div>
+                    <div className="flex gap-2 flex-wrap">{UK_REGIONS.map(r => <FilterPill key={r} label={r} selected={selectedRegions.includes(r)} onClick={() => toggle(setSelectedRegions, r)} color="indigo" />)}</div>
                   </div>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)" }}>Cost band</span>
-                      {selectedCosts.length > 0 && <span style={{ fontSize: 12, background: "#292524", color: "#fff", paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 500 }}>{selectedCosts.length}</span>}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Cost band</span>
+                      {selectedCosts.length > 0 && <span className="text-xs bg-stone-800 text-white px-1.5 py-0.5 rounded-full font-medium">{selectedCosts.length}</span>}
                     </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{COST_BANDS.map(c => <FilterPill key={c} label={c} selected={selectedCosts.includes(c)} onClick={() => toggle(setSelectedCosts, c)} color="stone" />)}</div>
+                    <div className="flex gap-2 flex-wrap">{COST_BANDS.map(c => <FilterPill key={c} label={c} selected={selectedCosts.includes(c)} onClick={() => toggle(setSelectedCosts, c)} color="stone" />)}</div>
                   </div>
                 </div>
               </div>
@@ -1349,45 +1235,50 @@ export default function HandbookLandingPage() {
 
           {/* AI detected */}
           {(aiDetectedHazards.filter(h => !selectedHazards.includes(h)).length > 0 || aiDetectedSectors.filter(s => !selectedSectors.includes(s)).length > 0) && (
-            <div className="fade-in" style={{ marginTop: 16, maxWidth: 768 }}>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--accent)", fontWeight: 500 }}>
-                  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            <div className="mt-4 max-w-3xl fade-in">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   Detected from your search:
                 </div>
                 {aiDetectedHazards.filter(h => !selectedHazards.includes(h)).map(h => (
-                  <span key={h} style={{ display: "inline-flex", alignItems: "center", gap: 6, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 9999, fontSize: 12, fontWeight: 500, border: "1px solid", background: "var(--accent-bg)", color: "var(--accent-text)", borderColor: "color-mix(in srgb, var(--accent) 60%, transparent)" }}>
+                  <span key={h} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-800 border-emerald-300">
                     {h}
-                    <button onClick={() => removeAiHazard(h)} style={{ opacity: 0.7 }}><svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    <button onClick={() => removeAiHazard(h)} className="hover:opacity-70">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                   </span>
                 ))}
                 {aiDetectedSectors.filter(s => !selectedSectors.includes(s)).map(s => (
-                  <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6, paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, borderRadius: 9999, fontSize: 12, fontWeight: 500, border: "1px solid", background: "var(--accent-bg)", color: "var(--accent-text)", borderColor: "color-mix(in srgb, var(--accent) 60%, transparent)" }}>
+                  <span key={s} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-800 border-emerald-300">
                     {s}
-                    <button onClick={() => removeAiSector(s)} style={{ opacity: 0.7 }}><svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    <button onClick={() => removeAiSector(s)} className="hover:opacity-70">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                   </span>
                 ))}
-                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>— remove any that don't apply</span>
+                <span className="text-xs text-stone-400">— remove any that don't apply</span>
               </div>
             </div>
           )}
         </div>
 
         {/* ── MARQUEE — always visible, responds to filters in place ── */}
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32, paddingBottom: 16 }}>
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="border-t pt-8 pb-4" style={{ borderColor: 'var(--border)' }}>
+          <div className="max-w-6xl mx-auto px-6 mb-4 flex items-center justify-between">
             <div>
-              <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--text-muted)" }}>From the knowledge base</p>
-              <p style={{ fontSize: 14, marginTop: 2, color: "var(--text-secondary)" }}>
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>From the knowledge base</p>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                 {marqueeHasFilters
                   ? `Showing ${marqueeMatchingSectors.length > 0 ? marqueeMatchingSectors.join(", ") : "matching"} cases — click any to view`
                   : "50 curated case studies — click any card to explore"}
               </p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
+            <div className="flex items-center gap-1 rounded-full p-0.5 border" style={{ borderColor: 'var(--border)', background: 'var(--surface-alt)' }}>
               {[{ id: "marquee", label: "Marquee" }, { id: "velocity", label: "Scroll velocity" }].map(v => (
                 <button key={v.id} onClick={() => setMarqueeView(v.id)}
-                  style={{ fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, transition: "all 0.2s", background: marqueeView === v.id ? "var(--text-primary)" : "transparent", color: marqueeView === v.id ? "var(--surface)" : "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                  className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all"
+                  style={{ background: marqueeView === v.id ? 'var(--text-primary)' : 'transparent', color: marqueeView === v.id ? 'var(--surface)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                   {v.label}
                 </button>
               ))}
@@ -1397,14 +1288,14 @@ export default function HandbookLandingPage() {
             ? <Marquee2D cases={MARQUEE_CASES} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
             : <ScrollVelocityMarquee cases={MARQUEE_CASES} onCardClick={handleMarqueeCardClick} matchingSectors={marqueeMatchingSectors} matchingHazards={marqueeMatchingHazards} hasFilters={marqueeHasFilters} gradFade={T.gradFade} />
           }
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, marginTop: 16 }}>
-            <p style={{ fontSize: 12, textAlign: "center", color: "var(--text-muted)" }}>Hover to pause · Click any card to view case study · Search above to find specific cases</p>
+          <div className="max-w-6xl mx-auto px-6 mt-4">
+            <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>Hover to pause · Click any card to view case study · Search above to find specific cases</p>
           </div>
         </div>
 
         {/* ── RESULTS ── */}
         <div ref={resultsRef}>
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingBottom: 80 }}>
+          <div className="max-w-6xl mx-auto px-6 pb-20">
 
             {/* Marquee-driven single case view */}
             {marqueeSelectedId && !hasActiveFilters && (() => {
@@ -1412,32 +1303,31 @@ export default function HandbookLandingPage() {
               const ph = !cs && Object.values(PLACEHOLDER_CASES).find(p => p.id === marqueeSelectedId);
               const display = cs || ph;
               if (!display) return null;
-              const phSectorStyle = SECTOR_STYLES[display.sector] || DEFAULT_SECTOR_STYLE;
               return (
                 <div className="fade-in">
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, paddingTop: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-secondary)" }}>
+                  <div className="flex items-center justify-between mb-4 pt-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-stone-700">
                         {cs ? "1 case study" : "Case study being curated"}
                       </span>
-                      <button onClick={clearAll} style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "underline" }}>Clear</button>
+                      <button onClick={clearAll} className="text-xs text-stone-400 hover:text-stone-600 underline">Clear</button>
                     </div>
-                    <span style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic" }}>Selected from marquee</span>
+                    <span className="text-xs text-stone-400 italic">Selected from marquee</span>
                   </div>
                   {cs ? (
-                    <div style={{ maxWidth: 512 }}>
+                    <div className="max-w-lg">
                       <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={[]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} />
                     </div>
                   ) : (
-                    <div style={{ maxWidth: 512 }}>
-                      <div style={{ borderRadius: 16, border: "1px dashed var(--border)", background: "var(--surface-alt)", padding: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, border: "1px solid", ...phSectorStyle }}>{display.sector}</span>
-                          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Being curated</span>
+                    <div className="max-w-lg">
+                      <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-6 flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border ${SECTOR_COLOR[display.sector] || "bg-stone-100 text-stone-500 border-stone-200"}`}>{display.sector}</span>
+                          <span className="text-xs text-stone-400">Being curated</span>
                         </div>
-                        <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-secondary)" }}>{display.title}</h3>
-                        <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.625 }}>{display.summary}</p>
-                        <p style={{ fontSize: 12, color: "var(--text-muted)", fontStyle: "italic", marginTop: 4 }}>This case study will appear here once curated and verified by the HIVE editorial team. Search above to find related cases already in the database.</p>
+                        <h3 className="text-base font-semibold text-stone-700">{display.title}</h3>
+                        <p className="text-sm text-stone-500 leading-relaxed">{display.summary}</p>
+                        <p className="text-xs text-stone-400 italic mt-1">This case study will appear here once curated and verified by the HIVE editorial team. Search above to find related cases already in the database.</p>
                       </div>
                     </div>
                   )}
@@ -1448,20 +1338,20 @@ export default function HandbookLandingPage() {
             {/* Search/filter-driven multi-result view */}
             {hasActiveFilters && (
               <>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, paddingTop: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-secondary)" }}>
+                <div className="flex items-center justify-between mb-4 pt-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-stone-700">
                       {results.length} case {results.length === 1 ? "study" : "studies"} matched
                     </span>
-                    <button onClick={clearAll} style={{ fontSize: 12, color: "var(--text-muted)", textDecoration: "underline" }}>Clear all</button>
+                    <button onClick={clearAll} className="text-xs text-stone-400 hover:text-stone-600 underline">Clear all</button>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--text-muted)" }}>
-                    <span style={{ width: 8, height: 8, borderRadius: 9999, background: "var(--accent)" }} />
+                  <div className="flex items-center gap-2 text-xs text-stone-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     Curated & verified by HIVE
                   </div>
                 </div>
 
-                {synthesis && <div className="fade-in"><SynthesisPanel synthesis={synthesis} themeKey={themeKey} resultIds={results.map((c: { id: string }) => c.id)} /></div>}
+                {synthesis && <div className="fade-in"><SynthesisPanel synthesis={synthesis} /></div>}
 
                 {/* Heatmap panel — ABOVE position (between synthesis and browse row) */}
                 {results.length > 0 && heatmapPosition === "above" && (
@@ -1471,39 +1361,28 @@ export default function HandbookLandingPage() {
                       activeHazards={allActiveHazards}
                       position={heatmapPosition}
                       onTogglePosition={setHeatmapPosition}
-                      themeKey={themeKey}
-                      onCellClick={(sector, hazardId) => router.push(`/handbook/options?theme=${themeKey}&sector=${sector.toLowerCase()}&hazard=${hazardId}`)}
                     />
                   </div>
                 )}
 
-                {/* Link 4 — between synthesis and cards: filtered all-cases view → case study page with filter params */}
+                {/* Link 4 — between synthesis and cards: filtered all-cases view */}
                 {results.length > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                       {results.length} case {results.length === 1 ? "study" : "studies"} below
                     </span>
-                    <Link
-                      href={(() => {
-                        const params = new URLSearchParams();
-                        if (query?.trim()) params.set("q", query.trim());
-                        if (allActiveSectors.length) params.set("sector", allActiveSectors.join(","));
-                        if (allActiveHazards.length) params.set("hazard", allActiveHazards.join(","));
-                        if (selectedRegions.length) params.set("region", selectedRegions.join(","));
-                        if (selectedCosts.length) params.set("cost", selectedCosts.join(","));
-                        const qs = params.toString();
-                        return `/handbook/cases${qs ? `?${qs}` : ""}`;
-                      })()}
-                      style={{ fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, transition: "color 0.2s", color: "var(--accent)", textDecoration: "none" }}
-                      title="View these case studies on the case study page">
-                      <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    <a href="/cases" onClick={e => { e.preventDefault(); alert(`→ /cases?filtered\nOpens the full case study browser pre-filtered to these ${results.length} matched results.\nUser can scroll, sort, and explore without leaving the search context.`); }}
+                      className="text-xs font-semibold flex items-center gap-1 transition-colors"
+                      style={{ color: 'var(--accent)' }}
+                      title="Browse these results in full case study view">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                       Browse all {results.length} cases →
-                    </Link>
+                    </a>
                   </div>
                 )}
 
                 {results.length > 0 ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {results.map((cs, i) => (
                       <div key={cs.id} className="card-enter" style={{ animationDelay: `${i * 0.04}s` }}>
                         <CaseStudyCard cs={cs} onClick={setSelectedCase} matchReasons={activeMatchReasons[cs.id]} onAddToBrief={toggleBrief} inBrief={brief.some(b => b.id === cs.id)} />
@@ -1511,26 +1390,24 @@ export default function HandbookLandingPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="fade-in" style={{ textAlign: "center", paddingTop: 80, paddingBottom: 80 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 16, background: "var(--surface-alt)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-                      <svg style={{ width: 24, height: 24, color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  <div className="text-center py-20 fade-in">
+                    <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-6 h-6 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </div>
-                    <h3 style={{ fontSize: 16, fontWeight: 500, color: "var(--text-secondary)", marginBottom: 4 }}>No case studies found</h3>
-                    <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 16 }}>Try fewer filters or broader search terms</p>
-                    <Link href="/handbook/cases" style={{ fontSize: 14, color: "var(--accent)", textDecoration: "underline" }}>Browse all case studies</Link>
+                    <h3 className="text-base font-medium text-stone-700 mb-1">No case studies found</h3>
+                    <p className="text-sm text-stone-400 mb-4">Try fewer filters or broader search terms</p>
+                    <button onClick={clearAll} className="text-sm text-emerald-700 underline">Browse all case studies</button>
                   </div>
                 )}
 
                 {/* Heatmap panel — BELOW position (after case cards) */}
                 {results.length > 0 && heatmapPosition === "below" && (
-                  <div className="fade-in" style={{ marginTop: 8 }}>
+                  <div className="fade-in mt-2">
                     <HeatmapPanel
                       activeSectors={allActiveSectors}
                       activeHazards={allActiveHazards}
                       position={heatmapPosition}
                       onTogglePosition={setHeatmapPosition}
-                      themeKey={themeKey}
-                      onCellClick={(sector, hazardId) => router.push(`/handbook/options?theme=${themeKey}&sector=${sector.toLowerCase()}&hazard=${hazardId}`)}
                     />
                   </div>
                 )}
@@ -1541,8 +1418,8 @@ export default function HandbookLandingPage() {
 
         {/* Stats */}
         {!hasActiveFilters && (
-          <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingBottom: 80 }}>
-            <div style={{ marginTop: 32, borderTop: "1px solid var(--border)", paddingTop: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          <div className="max-w-6xl mx-auto px-6 pb-20">
+            <div className="mt-8 border-t pt-8 grid grid-cols-2 md:grid-cols-4 gap-6" style={{ borderColor: 'var(--border)' }}>
               {[
                 { label: "Case Studies", value: "50", sub: "fully loaded in this prototype" },
                 { label: "Transport Sectors", value: "4", sub: "rail, aviation, maritime, highways" },
@@ -1550,9 +1427,9 @@ export default function HandbookLandingPage() {
                 { label: "UK Regions", value: "8", sub: "with geography-specific applicability" },
               ].map(stat => (
                 <div key={stat.label}>
-                  <div style={{ fontSize: "1.5rem", fontWeight: 600, fontFamily: "'DM Serif Display', serif", color: "var(--text-primary)" }}>{stat.value}</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, marginTop: 2, color: "var(--text-secondary)" }}>{stat.label}</div>
-                  <div style={{ fontSize: 12, marginTop: 2, color: "var(--text-muted)" }}>{stat.sub}</div>
+                  <div className="text-2xl font-semibold t-text" style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-primary)' }}>{stat.value}</div>
+                  <div className="text-xs font-semibold mt-0.5" style={{ color: 'var(--text-secondary)' }}>{stat.label}</div>
+                  <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{stat.sub}</div>
                 </div>
               ))}
             </div>
@@ -1563,46 +1440,46 @@ export default function HandbookLandingPage() {
 
         {/* ── BRIEF PANEL ── */}
         {briefOpen && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "flex-end", padding: 16, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)" }} onClick={() => setBriefOpen(false)}>
-            <div className="hive-modal" style={{ borderRadius: 24, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", width: "100%", maxWidth: 448, maxHeight: "88vh", overflowY: "auto", display: "flex", flexDirection: "column", fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
-              <div className="hive-modal" style={{ position: "sticky", top: 0, borderBottom: "1px solid var(--border)", paddingLeft: 24, paddingRight: 24, paddingTop: 16, paddingBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-end p-4 bg-black/30 backdrop-blur-sm" onClick={() => setBriefOpen(false)}>
+            <div className="hive-modal rounded-3xl shadow-2xl w-full max-w-md max-h-[88vh] overflow-y-auto flex flex-col" style={{ fontFamily: "'DM Sans', sans-serif" }} onClick={e => e.stopPropagation()}>
+              <div className="sticky top-0 hive-modal border-b px-6 py-4 flex items-center justify-between rounded-t-3xl" style={{ borderColor: 'var(--border)' }}>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--accent)" }}>
-                      <svg style={{ width: 12, height: 12, color: "#fff" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'var(--accent)' }}>
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     </div>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>AI Brief</span>
-                    <span style={{ fontSize: 12, background: "var(--accent-bg)", color: "var(--accent-text)", paddingLeft: 8, paddingRight: 8, paddingTop: 2, paddingBottom: 2, borderRadius: 9999, fontWeight: 600 }}>{brief.length} cases</span>
+                    <span className="text-sm font-semibold text-stone-900">AI Brief</span>
+                    <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">{brief.length} cases</span>
                   </div>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Cases collected for synthesis</p>
+                  <p className="text-xs text-stone-400">Cases collected for synthesis</p>
                 </div>
-                <button onClick={() => setBriefOpen(false)} style={{ width: 32, height: 32, borderRadius: 9999, background: "var(--surface-alt)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s, color 0.2s" }}>
-                  <svg style={{ width: 16, height: 16, color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <button onClick={() => setBriefOpen(false)} className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition-colors">
+                  <svg className="w-4 h-4 text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
-              <div style={{ padding: 24, flex: 1 }}>
+              <div className="p-6 flex-1">
                 {brief.length === 0 ? (
-                  <div style={{ textAlign: "center", paddingTop: 48, paddingBottom: 48 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 16, background: "var(--surface-alt)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                      <svg style={{ width: 20, height: 20, color: "var(--text-muted)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <div className="text-center py-12">
+                    <div className="w-10 h-10 rounded-2xl bg-stone-100 flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-5 h-5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                     </div>
-                    <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 4 }}>No cases added yet</p>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Add cases from search results using "+ Add to brief"</p>
+                    <p className="text-sm text-stone-500 mb-1">No cases added yet</p>
+                    <p className="text-xs text-stone-400">Add cases from search results using "+ Add to brief"</p>
                   </div>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+                  <div className="space-y-3 mb-6">
                     {brief.map(cs => (
-                      <div key={cs.id} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent)", letterSpacing: "0.05em", textTransform: "uppercase" }}>{cs.sector}</span>
+                      <div key={cs.id} className="flex items-start gap-3 p-3 rounded-xl border border-stone-100 bg-stone-50">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">{cs.sector}</span>
                           </div>
-                          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.375 }}>{cs.title}</p>
-                          <p style={{ fontSize: 12, fontWeight: 500, color: "var(--accent)", marginTop: 2 }}>{cs.hook}</p>
+                          <p className="text-sm font-semibold text-stone-900 leading-snug">{cs.title}</p>
+                          <p className="text-xs font-medium text-emerald-700 mt-0.5">{cs.hook}</p>
                         </div>
-                        <button onClick={() => toggleBrief(cs)} style={{ color: "var(--text-muted)", flexShrink: 0, marginTop: 2, transition: "color 0.2s" }}>
-                          <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        <button onClick={() => toggleBrief(cs)} className="text-stone-300 hover:text-stone-500 flex-shrink-0 mt-0.5 transition-colors">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
                     ))}
@@ -1610,30 +1487,25 @@ export default function HandbookLandingPage() {
                 )}
 
                 {brief.length >= 2 && (
-                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
-                    <div style={{ background: "var(--accent-bg)", border: "1px solid", borderColor: "color-mix(in srgb, var(--accent) 50%, transparent)", borderRadius: 16, padding: 16, marginBottom: 16 }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 8 }}>Pattern across {brief.length} cases</p>
-                      <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.625 }}>
+                  <div className="border-t border-stone-100 pt-4">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-2">Pattern across {brief.length} cases</p>
+                      <p className="text-sm text-stone-700 leading-relaxed">
                         {brief.length >= 2
                           ? `${brief.filter(c => c.transferability === "High").length} of ${brief.length} cases have high UK transferability. Common sectors: ${[...new Set(brief.map(c => c.sector))].join(", ")}. These cases collectively demonstrate that proactive climate adaptation — integrated into planned maintenance — delivers better value than reactive repair.`
                           : "Add more cases to see cross-case analysis."}
                       </p>
                     </div>
-                    <button
-                      onClick={() => {
-                        sessionStorage.setItem("hiveBriefCases", JSON.stringify(brief.map((c: { id: string }) => c.id)));
-                        sessionStorage.setItem("hiveBriefTheme", themeKey);
-                        window.location.href = "/handbook/brief?tutorial=false";
-                      }}
-                      style={{ width: "100%", paddingTop: 12, paddingBottom: 12, borderRadius: 16, background: "var(--accent)", color: "#fff", fontSize: 14, fontWeight: 600, transition: "background 0.2s, color 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                      <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                      Generate full AI brief →
+                    <button className="w-full py-3 rounded-2xl bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800 transition-colors flex items-center justify-center gap-2">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                      Generate full AI brief
+                      <span className="text-emerald-300 text-xs font-normal">— coming in full platform</span>
                     </button>
                   </div>
                 )}
 
                 {brief.length === 1 && (
-                  <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", marginTop: 8 }}>Add one more case to enable cross-case analysis</p>
+                  <p className="text-xs text-stone-400 text-center mt-2">Add one more case to enable cross-case analysis</p>
                 )}
               </div>
             </div>

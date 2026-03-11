@@ -1,7 +1,6 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { NavPill } from "@/components/NavPill";
 
 // ── SHARED DATA ────────────────────────────────────────────────────────────────
@@ -938,7 +937,7 @@ function DirectionB() {
                   </div>
                   <h3 style={{ fontSize:15,fontWeight:600,color:T.textSecondary,marginBottom:6 }}>No case studies found</h3>
                   <p style={{ fontSize:13,color:T.textMuted,marginBottom:16 }}>Try fewer filters or broader search terms</p>
-                  <Link href="/handbook/cases" style={{ fontSize:13,color:T.accent,background:"none",border:"none",cursor:"pointer",textDecoration:"underline",fontFamily:"'DM Sans',sans-serif" }}>Browse all case studies</Link>
+                  <button onClick={clearAll} style={{ fontSize:13,color:T.accent,background:"none",border:"none",cursor:"pointer",textDecoration:"underline",fontFamily:"'DM Sans',sans-serif" }}>Browse all case studies</button>
                 </div>
               )}
             </>
