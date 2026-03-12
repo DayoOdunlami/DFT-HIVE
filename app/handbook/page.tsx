@@ -1,6 +1,6 @@
 // @ts-nocheck
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -941,8 +941,8 @@ const HeatmapPanel = ({ activeSectors = [], activeHazards = [], position, onTogg
   );
 };
 
-// ── MAIN COMPONENT ──
-export default function HandbookLandingPage() {
+// ── MAIN COMPONENT (uses useSearchParams — must be inside Suspense) ──
+function HandbookLandingPageContent() {
   const [query, setQuery] = useState("");
   const [selectedHazards, setSelectedHazards] = useState([]);
   const [selectedSectors, setSelectedSectors] = useState([]);
@@ -1641,5 +1641,21 @@ export default function HandbookLandingPage() {
         )}
       </div>
     </>
+  );
+}
+
+function HandbookLandingPageFallback() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", color: "#6b7280" }}>
+      Loading…
+    </div>
+  );
+}
+
+export default function HandbookLandingPage() {
+  return (
+    <Suspense fallback={<HandbookLandingPageFallback />}>
+      <HandbookLandingPageContent />
+    </Suspense>
   );
 }
