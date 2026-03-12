@@ -1,13 +1,58 @@
 "use client";
 
+import { useState } from "react";
 import type { CaseStudy } from "@/lib/hive/seed-data";
 
 interface ApplicabilityPanelProps {
   cs: CaseStudy;
 }
 
+const SECTORS = ["Rail", "Aviation", "Maritime", "Highways"] as const;
+
 export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
   const isHigh = cs.transferability === "High";
+  const [selectedSector, setSelectedSector] = useState<string | null>(null);
+  const [considerations, setConsiderations] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleSectorClick = async (sector: string) => {
+    if (selectedSector === sector) {
+      setSelectedSector(null);
+      setConsiderations([]);
+      return;
+    }
+    setSelectedSector(sector);
+    setConsiderations([]);
+    setLoading(true);
+    try {
+      const articleText = [
+        cs.summary,
+        cs.insight,
+        cs.transferabilityNote,
+        ...(cs.sections ? Object.values(cs.sections) : []),
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const res = await fetch("/api/handbook/applicability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          article_id: cs.id,
+          article_text: articleText,
+          target_sector: sector,
+        }),
+      });
+      const data = await res.json();
+      setConsiderations(data.considerations ?? []);
+    } catch {
+      setConsiderations([
+        "Unable to generate applicability analysis. Please try again.",
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -18,7 +63,6 @@ export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
         background: isHigh ? "#f0f9ff" : "#fffbeb",
       }}
     >
-      {/* Badge */}
       <div style={{ marginBottom: 10 }}>
         <span
           style={{
@@ -46,7 +90,6 @@ export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
         </span>
       </div>
 
-      {/* Note */}
       <p
         style={{
           fontSize: 13,
@@ -58,7 +101,6 @@ export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
         {cs.transferabilityNote}
       </p>
 
-      {/* UK applicability tags */}
       {cs.ukApplicability.length > 0 && (
         <div>
           <p
@@ -94,7 +136,6 @@ export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
         </div>
       )}
 
-      {/* UK region */}
       {cs.ukRegion && cs.ukRegion !== "—" && (
         <p
           style={{
@@ -123,6 +164,137 @@ export function ApplicabilityPanel({ cs }: ApplicabilityPanelProps) {
           {cs.ukRegion}
         </p>
       )}
+
+      {/* AI-powered sector applicability */}
+      <div
+        style={{
+          marginTop: 14,
+          paddingTop: 14,
+          borderTop: `1px solid ${isHigh ? "#b3d4ef" : "#fde68a"}`,
+        }}
+      >
+        <p
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.07em",
+            color: "#6b7280",
+            marginBottom: 8,
+          }}
+        >
+          How does this apply to...
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+          {SECTORS.filter((s) => s !== cs.sector).map((sector) => (
+            <button
+              key={sector}
+              onClick={() => handleSectorClick(sector)}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "5px 10px",
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                background:
+                  selectedSector === sector ? "#1d70b8" : "#fff",
+                color:
+                  selectedSector === sector ? "#fff" : "#374151",
+                boxShadow:
+                  selectedSector === sector
+                    ? "none"
+                    : "0 1px 2px rgba(0,0,0,0.06)",
+              }}
+            >
+              {sector}
+            </button>
+          ))}
+        </div>
+
+        {loading && (
+          <div
+            style={{
+              marginTop: 10,
+              fontSize: 11,
+              color: "#6b7280",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: "#1d70b8",
+                display: "inline-block",
+                animation: "pulse 1s infinite",
+              }}
+            />
+            Analysing applicability...
+          </div>
+        )}
+
+        {considerations.length > 0 && !loading && (
+          <div
+            style={{
+              marginTop: 10,
+              padding: "10px 12px",
+              background: "#fff",
+              borderRadius: 8,
+              border: "1px solid #e5e7eb",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#1d70b8",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <svg
+                width="10"
+                height="10"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="#1d70b8"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              AI-generated · {selectedSector}
+            </div>
+            <ol
+              style={{
+                margin: 0,
+                paddingLeft: 16,
+                fontSize: 12,
+                color: "#374151",
+                lineHeight: 1.65,
+              }}
+            >
+              {considerations.map((c, i) => (
+                <li key={i} style={{ marginBottom: i < considerations.length - 1 ? 6 : 0 }}>
+                  {c}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,10 @@
 // @ts-nocheck
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { CASE_STUDIES as SEED_CASE_STUDIES } from "@/lib/hive/seed-data";
+import { useChatContext } from "@/components/handbook/shared/ChatContext";
 
 // ── ALL 50 MARQUEE CASE STUDIES ──
 // caseStudyId = links marquee card directly to a rich result card
@@ -96,114 +98,8 @@ const PLACEHOLDER_CASES = {
   },
 };
 
-// ── 7 RICH CASE STUDIES FOR GRID ──
-const CASE_STUDIES = [
-  {
-    id: "ID_19", title: "Phoenix Cool Pavement Programme", organisation: "City of Phoenix Street Transportation Department",
-    sector: "Highways", hook: "100+ miles treated · 6°C surface temp reduction · $4.8m annual",
-    hazards: { cause: ["High temperatures", "Urban Heat Island effect"], effect: ["Road surface overheating", "Increased energy demand"] },
-    assets: ["Road pavement"],
-    measures: ["CoolSeal reflective coating", "Pavement maintenance programme", "University monitoring partnership"],
-    location: "Phoenix, USA", ukRegion: "Applicable to UK urban areas", year: "2021–ongoing",
-    cost: "USD $4.8m annual (£3.73m); initial pilot £2.33m", costBand: "£1m–£10m",
-    summary: "Reflective CoolSeal coating applied to 100+ miles of residential roads to combat extreme urban heat island effect. The product increases road reflectivity by 30% and reduces surface temperatures by 6°C, integrated into existing pavement maintenance budgets.",
-    transferability: "Medium",
-    transferabilityNote: "Directly applicable to UK cities experiencing urban heat island intensification. London hotspots already 4.5°C warmer at night than rural surroundings. Heat-related deaths in London more than doubled in 2022. Currently limited to streets with ≤25mph speed limit due to skid resistance constraints.",
-    ukApplicability: ["London urban roads", "Major UK city centres", "Transport for London managed streets", "Local authority highway maintenance programmes"],
-    insight: "Cool pavement also extends road longevity by reducing thermal degradation — delivering avoided maintenance costs beyond the cooling benefit. Funded from existing pavement maintenance budgets, not additional climate spend.",
-    tags: ["highways", "roads", "heat", "urban heat island", "heatwave", "pavement", "reflective coating", "surface temperature", "city"],
-  },
-  {
-    id: "ID_40", title: "Sheffield Grey to Green", organisation: "Sheffield City Council",
-    sector: "Highways", hook: "60% grey to green · discharge cut 80% · 75,000 plants · 561% biodiversity uplift",
-    hazards: { cause: ["Flooding – fluvial", "Flooding – surface water", "Heavy rainfall"], effect: ["Water damage", "Infrastructure disruption"] },
-    assets: ["Road pavement", "Foot and cycle paths", "Rail track", "Trams", "Bridges", "Signals and signalling", "Buildings and stations"],
-    measures: ["Sustainable Drainage Systems (SuDS)", "Rain gardens", "Vegetated swales", "Nature-based solutions", "Green street corridor"],
-    location: "Sheffield, UK", ukRegion: "Yorkshire & Humber", year: "2014–ongoing",
-    cost: "Phase 1 £3.6m; Phase 2 £6.3m; Phase 3 ongoing", costBand: "£1m–£10m per phase",
-    summary: "1.5km urban green corridor replacing a former ring road dual carriageway with Sustainable Drainage Systems following the 2007 floods that caused £30m damage, killed 2 people, closed Sheffield station, cancelled tram services and damaged 28 roads.",
-    transferability: "High",
-    transferabilityNote: "UK case directly applicable nationwide. The largest retrofit grey-to-green project in the UK. Explicitly applicable to rail corridors following river valleys. Cross-sector impact — originally a road project that also protects rail and tram infrastructure downstream.",
-    ukApplicability: ["UK city centre transport corridors", "Rail lines following river valleys", "Urban tram networks", "Local authority highway flood management"],
-    insight: "SuDS reduced river discharge from a 1-in-100-year event by 87% — from 69.6 to 9.2 litres/sec. Inspired an £80m SuDS project in Mansfield. Now the default approach for Sheffield city centre regeneration.",
-    tags: ["highways", "roads", "rail", "tram", "flooding", "surface water", "SuDS", "nature-based", "urban drainage", "heavy rainfall", "green infrastructure", "river valley", "urban flooding"],
-  },
-  {
-    id: "ID_UKPN_01", title: "Croydon Grid Flood Defence", organisation: "UK Power Networks",
-    sector: "Critical Infrastructure", hook: "69,000 customers protected · 1-in-1,000-year flood standard · £800k",
-    hazards: { cause: ["Flooding – fluvial"], effect: ["Power disruption", "Loss of electricity supply to transport networks"] },
-    assets: ["Electrical substation", "Transformers", "Electrical buildings"],
-    measures: ["Permanent flood barriers", "Equipment sealing", "Equipment elevation above flood level", "Flood walls around transformers"],
-    location: "Croydon, London, UK", ukRegion: "London & South East", year: "c.2022–2023",
-    cost: "£800,000 (this site); £14m total programme since 2010", costBand: "Under £1m (site); £10m–£100m (programme)",
-    summary: "Permanent flood barriers installed at Croydon Grid substation to withstand a 1-in-1,000-year flood of the River Wandle, protecting electricity supply to 69,000 homes and businesses including transport infrastructure in South London.",
-    transferability: "High",
-    transferabilityNote: "Part of UK Power Networks' programme that has now protected 119 substations from river, tidal and surface water flooding. Highly relevant to substations supporting rail electrification infrastructure and EV charging networks across South East England.",
-    ukApplicability: ["UK electrical substations in flood-risk zones", "Rail electrification supply infrastructure", "Urban transport power supply", "South East England energy grid"],
-    insight: "Equipment sealing, raising above flood level, and targeted flood walling at a single site cost £800k — part of a £14m programme protecting 119 substations since 2010. Demonstrates that site-specific incremental hardening at modest cost delivers significant network resilience.",
-    tags: ["energy", "flooding", "fluvial", "critical infrastructure", "substation", "power supply", "resilience", "flood barriers", "south london", "rail electrification"],
-  },
-  {
-    id: "ID_32", title: "Heathrow Airport Balancing Ponds", organisation: "Heathrow Airport Ltd",
-    sector: "Aviation", hook: "Year-round flow control · £2.1m bundled into wider programme",
-    hazards: { cause: ["Heavy rainfall", "Drought"], effect: ["Flooding – fluvial", "Flooding – surface water"] },
-    assets: ["Access routes", "Airport services"],
-    measures: ["Balancing ponds", "Tilting weirs", "Nature-based solution", "MBBR wastewater treatment"],
-    location: "London, UK", ukRegion: "London & South East", year: "2016–2022",
-    cost: "£2.1m (sheet piling component)", costBand: "£1m–£10m",
-    summary: "Constructed balancing ponds to manage both drought and heavy rainfall events, controlling water volume entering drainage systems and reducing flood risk to airport access routes.",
-    transferability: "High",
-    transferabilityNote: "Tilting weir systems and Nature-based Solutions directly applicable to other airports, ports, and urban transport infrastructure facing surface water flooding.",
-    ukApplicability: ["Other UK airports", "Urban transport hubs", "Coastal infrastructure"],
-    insight: "Integrating climate adaptation into planned development activities kept costs minimal — bundled with a wider infrastructure programme rather than treated as standalone.",
-    tags: ["aviation", "flooding", "drought", "nature-based", "urban drainage", "water management", "heavy rainfall", "surface water"],
-  },
-  {
-    id: "ID_06", title: "Austrian Federal Railways Climate Adaptation", organisation: "Austrian Federal Railways (ÖBB)",
-    sector: "Rail", hook: "212km barriers · 3,370ha protected forest · sensors across Alpine network",
-    hazards: { cause: ["Heavy rainfall", "Storms", "Freeze-thaw cycles"], effect: ["Landslides", "Rockfalls", "Flooding – fluvial"] },
-    assets: ["Track", "Bridges", "Earthworks", "Signalling", "Level crossings"],
-    measures: ["Slope stabilisation", "Rockfall barriers", "Flood retention basins", "Early warning systems", "Real-time geotechnical monitoring"],
-    location: "Alpine regions, Austria", ukRegion: "Applicable UK-wide", year: "2005–present",
-    cost: "€3bn+ annual infrastructure budget", costBand: "Large programme",
-    summary: "Comprehensive physical and predictive technology adaptations across the Alpine rail network, combining slope stabilisation, protective barriers and geotechnical sensor monitoring.",
-    transferability: "High",
-    transferabilityNote: "Rockfall barriers, drainage management and slope stabilisation directly applicable to UK upland rail. Particularly relevant to the Peak District, Scottish Highlands, and Welsh valley lines.",
-    ukApplicability: ["UK upland rail", "Scottish Highlands lines", "Welsh Valley lines", "Peak District infrastructure"],
-    insight: "Site-specific assessment — combining damage history, local conditions, and vulnerability analysis — was more effective than blanket solutions. Early warning systems reduced reactive maintenance costs significantly.",
-    tags: ["rail", "landslide", "flooding", "sensors", "monitoring", "earthworks", "slope", "embankment", "precipitation", "rockfall"],
-  },
-  {
-    id: "ID_01", title: "Port of Calais Extension and Sea Defence", organisation: "Société des Ports du Détroit",
-    sector: "Maritime", hook: "3.3km seawall · 100-year design life · €863m total",
-    hazards: { cause: ["Sea level rise", "Storms and high winds"], effect: ["Storm surge", "Coastal flooding", "Coastal erosion"] },
-    assets: ["Port structures", "Terminal", "Retaining walls"],
-    measures: ["3.3km sea wall", "Land reclamation", "Reinforced retaining walls", "100-year design life specification"],
-    location: "Calais, France", ukRegion: "Applicable to UK coastal", year: "2021",
-    cost: "€863m total project", costBand: "£100m+",
-    summary: "Doubled port capacity while building a 3.3km seawall designed for 100-year service life, explicitly accounting for sea level rise and climate change projections in all structural specifications.",
-    transferability: "High",
-    transferabilityNote: "Directly applicable to UK ports facing sea level rise risk. Humber Ports specifically identified as having medium sea level rise risk.",
-    ukApplicability: ["Humber Ports", "Port of Dover", "Thames Estuary infrastructure", "East coast ports"],
-    insight: "Treating climate resilience as a core design requirement from the outset — not as an add-on — allowed the seawall to be cost-effectively integrated into a wider port upgrade.",
-    tags: ["maritime", "ports", "sea level rise", "storm surge", "coastal", "flooding", "seawall", "infrastructure"],
-  },
-  {
-    id: "ID_11", title: "Deutsche Bahn Climate Adaptation Measures", organisation: "Deutsche Bahn",
-    sector: "Rail", hook: "25% storm damage reduction · 20% fewer heat disruptions · IoT across national network",
-    hazards: { cause: ["High temperatures", "Storms and high winds"], effect: ["Vegetation dieback", "Storm damage", "Track overheating"] },
-    assets: ["Tracks", "Trains", "Overhead lines", "Lineside vegetation"],
-    measures: ["Air-conditioned rolling stock (ICE 4)", "AI-assisted vegetation mapping", "IoT temperature sensors", "DB Climate Forest programme"],
-    location: "Germany", ukRegion: "Applicable UK-wide", year: "2007–2024",
-    cost: "€6bn (ICE 4 fleet); €625m (vegetation programme)", costBand: "Large programme",
-    summary: "Phased adaptation combining air-conditioned rolling stock, AI-assisted vegetation management via satellite data, and IoT sensor networks to address escalating heat and storm risks.",
-    transferability: "High",
-    transferabilityNote: "Vegetation management and rolling stock air-conditioning directly applicable to UK rail. Highest priority in South and East England where temperatures are projected to reach higher peaks.",
-    ukApplicability: ["Network Rail Southern region", "East Midlands Railway", "UK rolling stock procurement", "Lineside vegetation management"],
-    insight: "Vegetation management delivered 25% reduction in storm damage between 2018 and 2020 — one of the highest ROI findings in the HIVE database. Heat disruptions fell 20% after ICE 4 deployment.",
-    tags: ["rail", "heat", "temperature", "vegetation", "sensors", "rolling stock", "storms", "heatwave", "overheating"],
-  },
-];
+// ── CASE STUDIES FROM DATA LAYER (37 from JSON, enriched with hand-curated overrides) ──
+const CASE_STUDIES = SEED_CASE_STUDIES;
 
 const HAZARDS_CAUSE = ["Heavy rainfall", "High temperatures", "Storms", "Sea level rise", "Drought", "Freeze-thaw"];
 const SECTORS = ["Rail", "Aviation", "Maritime", "Highways"];
@@ -957,6 +853,50 @@ function HandbookLandingPageContent() {
   const [activeMatchReasons, setActiveMatchReasons] = useState({});
   const [themeKey, setThemeKey] = useState("light");
   const T = THEMES[themeKey];
+
+  // Semantic search state (scenarios A/B/C)
+  const [semanticPrompt, setSemanticPrompt] = useState(null);
+  const [semanticScenario, setSemanticScenario] = useState(null);
+  const { setSessionIntent, openChat, setChatContext, setMessages } = useChatContext();
+
+  // Semantic search: fire on debounced query, supplements client-side search
+  const semanticTimerRef = useRef(null);
+  useEffect(() => {
+    if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current);
+    if (!query.trim() || query.trim().length < 4) {
+      setSemanticPrompt(null);
+      setSemanticScenario(null);
+      return;
+    }
+    semanticTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/handbook/semantic-search?q=${encodeURIComponent(query.trim())}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setSemanticScenario(data.scenario);
+        if (data.scenario === "B" && data.results?.length > 0) {
+          const topIds = data.results.slice(0, 3).map(r => r.article_id);
+          setSemanticPrompt(`Found ${topIds.length} relevant cases — want me to explain how they apply? [Ask HIVE →]`);
+        } else if (data.scenario === "C") {
+          setSemanticPrompt(null);
+          openChat("browse");
+          setMessages(prev => prev.length === 0 ? [
+            { role: "ai", text: `I couldn't find a strong match for "${query}". Could you tell me more about the infrastructure type, location, or specific hazard you're interested in?` }
+          ] : prev);
+        } else {
+          setSemanticPrompt(null);
+        }
+      } catch { /* ignore — client-side search still works */ }
+    }, 600);
+    return () => { if (semanticTimerRef.current) clearTimeout(semanticTimerRef.current); };
+  }, [query]);
+
+  // Store session intent when user starts searching
+  useEffect(() => {
+    if (query.trim().length >= 3) {
+      setSessionIntent(query.trim());
+    }
+  }, [query, setSessionIntent]);
   const [marqueeView, setMarqueeView] = useState("marquee");
   const [marqueeSelectedId, setMarqueeSelectedId] = useState(null); // caseStudyId or 'PH_SECTOR'
   const [brief, setBrief] = useState([]);
@@ -1246,7 +1186,7 @@ function HandbookLandingPageContent() {
           <div className="fade-up" style={{ maxWidth: 768 }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 600, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 6, borderRadius: 9999, marginBottom: 20, letterSpacing: "0.05em", textTransform: "uppercase", background: T.accentBg, color: T.accentText }}>
               <span className="animate-pulse" style={{ width: 6, height: 6, borderRadius: 9999, background: T.accent }} />
-              Prototype · 7 of 80+ case studies fully loaded
+              Prototype · {CASE_STUDIES.length} case studies loaded
             </div>
             <h1 style={{ fontSize: "2.25rem", fontWeight: 400, lineHeight: 1.25, marginBottom: 12, fontFamily: "'DM Serif Display', serif", color: T.textPrimary }}>
               What risk are you
@@ -1275,6 +1215,17 @@ function HandbookLandingPageContent() {
             </div>
             {!query && (
               <p style={{ fontSize: 12, marginTop: 12, fontStyle: "italic", color: "var(--text-muted)" }}>Describe your challenge — location, asset type, climate risk</p>
+            )}
+            {semanticPrompt && semanticScenario === "B" && (
+              <div style={{ marginTop: 8, padding: "8px 14px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, animation: "fadeUp 0.2s ease" }}>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{semanticPrompt}</span>
+                <button
+                  onClick={() => { setChatContext("browse"); openChat(); }}
+                  style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 6, background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit" }}
+                >
+                  Ask HIVE →
+                </button>
+              </div>
             )}
           </div>
 
@@ -1381,7 +1332,7 @@ function HandbookLandingPageContent() {
               <p style={{ fontSize: 14, marginTop: 2, color: "var(--text-secondary)" }}>
                 {marqueeHasFilters
                   ? `Showing ${marqueeMatchingSectors.length > 0 ? marqueeMatchingSectors.join(", ") : "matching"} cases — click any to view`
-                  : "50 curated case studies — click any card to explore"}
+                  : `${MARQUEE_CASES.length} curated adaptation examples — click any card to explore`}
               </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 9999, padding: 2, border: "1px solid var(--border)", background: "var(--surface-alt)" }}>
@@ -1544,9 +1495,9 @@ function HandbookLandingPageContent() {
           <div style={{ maxWidth: 1152, margin: "0 auto", paddingLeft: 24, paddingRight: 24, paddingBottom: 80 }}>
             <div style={{ marginTop: 32, borderTop: "1px solid var(--border)", paddingTop: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
               {[
-                { label: "Case Studies", value: "50", sub: "fully loaded in this prototype" },
-                { label: "Transport Sectors", value: "4", sub: "rail, aviation, maritime, highways" },
-                { label: "Climate Hazards", value: "12", sub: "first and second order covered" },
+                { label: "Case Studies", value: String(SEED_CASE_STUDIES.length), sub: "fully loaded from TRIB database" },
+                { label: "Transport Sectors", value: "5", sub: "rail, aviation, maritime, highways, critical infrastructure" },
+                { label: "Climate Hazards", value: "12+", sub: "first and second order covered" },
                 { label: "UK Regions", value: "8", sub: "with geography-specific applicability" },
               ].map(stat => (
                 <div key={stat.label}>

@@ -1,10 +1,18 @@
 // @ts-nocheck
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { CASE_STUDIES as SEED_CASE_STUDIES } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
 import { THEMES } from "@/lib/hive/themes";
+
+const TRIB_MEASURES: Array<{
+  trib_article_id: string;
+  project_title: string;
+  measures: Array<{ name: string; description: string }>;
+}> = require("@/data/trib-measures.json");
+
+const TOTAL_MEASURE_COUNT = TRIB_MEASURES.reduce((s, a) => s + a.measures.length, 0);
 
 const SECTOR_COLOR = {
   Rail:     { background:"#eff6ff", color:"#1d4ed8", borderColor:"#bfdbfe" },
@@ -176,8 +184,60 @@ const CaseCard = ({ cs, onClick, onAddToBrief, inBrief, highlighted }) => {
   );
 };
 
-// Hack to read CSS vars without passing T down — reads from document root
+// ── MEASURE CARD ─────────────────────────────────────────────────────────────
+// Lighter card for measure view: measure name + description + parent project link
+const MeasureCard = ({ measureName, measureDescription, cs, onClick, onAddToBrief, inBrief, highlighted }) => {
+  const sc = SECTOR_COLOR[cs.sector] || SECTOR_COLOR.Multiple;
+  return (
+    <div
+      onClick={() => onClick(cs)}
+      className="hive-card"
+      style={{
+        borderRadius:16, border:"1px solid", cursor:"pointer",
+        padding:20, display:"flex", flexDirection:"column", gap:0,
+        fontFamily:"'DM Sans',sans-serif", transition:"all 0.2s",
+        outline: highlighted ? "2px solid var(--accent)" : "none",
+        outlineOffset: highlighted ? 2 : 0,
+      }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+        <span style={{ fontSize:10, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", padding:"2px 8px", borderRadius:4, border:"1px solid", ...sc }}>{cs.sector}</span>
+        <span style={{ fontSize:10, fontWeight:500, color:"var(--text-muted)", background:"var(--surface-alt)", padding:"2px 8px", borderRadius:4 }}>Measure</span>
+      </div>
 
+      <h3 style={{ fontSize:15, fontWeight:600, lineHeight:1.35, margin:"0 0 6px", color:"var(--text-primary)" }}>{measureName}</h3>
+
+      <p style={{ fontSize:12, color:"var(--text-muted)", margin:"0 0 8px", fontWeight:500 }}>
+        Part of: {cs.title}
+      </p>
+
+      {measureDescription && (
+        <p className="line-clamp-2" style={{ fontSize:12, color:"var(--text-secondary)", lineHeight:1.65, margin:"0 0 12px", flex:1 }}>{measureDescription}</p>
+      )}
+
+      <div style={{ display:"flex", flexWrap:"wrap", gap:5, marginBottom:12 }}>
+        {cs.hazards.cause.slice(0,2).map(h => <HazardBadge key={h} hazard={h} type="cause"/>)}
+      </div>
+
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:10, borderTop:"1px solid var(--border)" }}>
+        <TransferabilityBadge level={cs.transferability}/>
+        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+          <button
+            onClick={e => { e.stopPropagation(); onAddToBrief(cs); }}
+            style={{ fontSize:11, fontWeight:700, padding:"5px 12px", borderRadius:9999, border:"1.5px solid", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"all 0.15s",
+              background: inBrief ? "var(--accent)" : "transparent",
+              color: inBrief ? "#fff" : "var(--text-secondary)",
+              borderColor: inBrief ? "var(--accent)" : "var(--border)",
+            }}>
+            {inBrief ? "✓ In brief" : "+ Brief"}
+          </button>
+          <span style={{ fontSize:11, fontWeight:600, color:"var(--accent)" }}>
+            View case →
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ── CASE STUDY DETAIL MODAL ──────────────────────────────────────────────────
 // Same component as handbook, consistent behaviour
@@ -290,120 +350,8 @@ const CaseDetail = ({ cs, onClose, onAddToBrief, inBrief }) => (
   </div>
 );
 
-// ── CHAT PANEL (drawer) ──────────────────────────────────────────────────────
-// Adapted from hive-chat-options-v2 Option B — search context only
-const AI_TURNS = [
-  { text:"The HIVE knowledge base has strong evidence for flooding adaptation on urban transport corridors. Sheffield Grey to Green reduced river discharge from a 1-in-100-year event by 87% using SuDS alongside a city-centre rail and tram network. Heathrow's balancing ponds demonstrate complementary dual-resilience — addressing both flooding and drought.", chips:["ID_40","ID_32"], gap:null, actions:[{label:"Add both to brief",primary:true},{label:"Tell me about costs"}] },
-  { text:"Cost data: Sheffield ran £3.6m–£6.3m per phase (ERDF + local authority funded). Heathrow's retaining walls cost ~£2.1m but adaptation was integrated into planned business development — making the marginal climate cost minimal. Both report significant avoided costs that weren't formally quantified.", chips:["ID_40","ID_32"], gap:"Cost data is indicative. Original years/currencies apply — not inflation-adjusted.", actions:[{label:"What about UK transferability?"},{label:"Generate cost benchmark",demo:true}] },
-  { text:"UK transferability: Sheffield and Heathrow are both rated High — UK cases with direct applicability. Phoenix Cool Pavements is rated Medium — applicable to UK urban streets ≤25mph including depot roads and urban bus corridors, less applicable to A-roads.", chips:["ID_40","ID_32","ID_19"], gap:null, actions:[{label:"Build a brief from these 3 cases",primary:true},{label:"Run Applicability Scan",demo:true}] },
-];
+// ── CHAT: uses shared ChatPanel via layout (no local panel needed) ──
 
-function ChatPanel({ onHighlight, onAddToBrief, brief }) {
-  const [messages, setMessages] = useState([
-    { role:"ai", text:"What are you looking for? I can search across 109 curated case studies on transport climate adaptation.", chips:[], gap:null }
-  ]);
-  const [input, setInput] = useState("");
-  const [thinking, setThinking] = useState(false);
-  const turnRef = useRef(0);
-  const bottomRef = useRef(null);
-
-  const STARTERS = ["Flooding on rail corridors", "Urban heat — what works?", "High UK transferability cases", "Coastal resilience options"];
-
-  const send = (text) => {
-    const q = text || input; if (!q.trim()) return;
-    setInput("");
-    setMessages(m => [...m, { role:"user", text:q }]);
-    setThinking(true);
-    setTimeout(() => {
-      const r = AI_TURNS[turnRef.current % AI_TURNS.length]; turnRef.current++;
-      setMessages(m => [...m, { role:"ai", text:r.text, chips:r.chips, gap:r.gap, actions:r.actions }]);
-      onHighlight?.(r.chips || []);
-      setThinking(false);
-    }, 1400);
-  };
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, thinking]);
-
-  return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100%" }}>
-      <div style={{ flex:1, overflowY:"auto", padding:"14px 18px" }}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{ marginBottom:14, animation:"fadeUp 0.2s ease" }}>
-            {msg.role === "user" ? (
-              <div style={{ display:"flex", justifyContent:"flex-end" }}>
-                <div style={{ background:"var(--accent)", color:"#fff", padding:"10px 14px", borderRadius:"12px 12px 3px 12px", fontSize:13, maxWidth:"85%", lineHeight:1.5 }}>{msg.text}</div>
-              </div>
-            ) : (
-              <div>
-                <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:6 }}>
-                  <div style={{ width:18, height:18, borderRadius:4, background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <svg width="8" height="8" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                  </div>
-                  <span style={{ fontSize:11, fontWeight:700, color:"var(--accent)" }}>HIVE</span>
-                  <span style={{ fontSize:10, color:"var(--text-muted)" }}>· Case search</span>
-                </div>
-                <div style={{ background:"var(--surface-alt)", padding:"12px 14px", borderRadius:"3px 12px 12px 12px", fontSize:13, lineHeight:1.7, color:"var(--text-primary)" }}>
-                  {msg.text}
-                  {msg.gap && <div style={{ marginTop:7, padding:"7px 10px", background:"#fef3c7", borderRadius:5, fontSize:11, color:"#78716c" }}><strong style={{ color:"#b45309" }}>Gap: </strong>{msg.gap}</div>}
-                </div>
-                {msg.chips?.length > 0 && (
-                  <div style={{ marginTop:7, display:"flex", gap:5, flexWrap:"wrap" }}>
-                    {msg.chips.map(id => {
-                      const cs = CASE_STUDIES_NORMALISED.find(c => c.id === id);
-                      const inBrief = brief.some(b => b.id === id);
-                      if (!cs) return null;
-                      return (
-                        <div key={id} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:8, padding:"8px 11px", fontSize:12 }}>
-                          <div style={{ fontWeight:600, color:"var(--text-primary)", marginBottom:3 }}>{cs.title}</div>
-                          <div style={{ fontSize:11, color:"var(--accent)", marginBottom:6 }}>{cs.hook}</div>
-                          <button onClick={() => onAddToBrief(cs)} style={{ fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:5, border:"none", cursor:inBrief?"default":"pointer", background:inBrief?"var(--surface-alt)":"var(--accent)", color:inBrief?"var(--text-muted)":"#fff" }}>
-                            {inBrief ? "✓ In brief" : "+ Add to brief"}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {msg.actions && (
-                  <div style={{ marginTop:8, display:"flex", gap:6, flexWrap:"wrap" }}>
-                    {msg.actions.map((a, j) => (
-                      <button key={j} onClick={() => send(a.label)} style={{ padding:"6px 11px", borderRadius:5, fontSize:11, fontWeight:600, cursor:"pointer", border:"none", background:a.primary?"var(--accent)":"var(--surface-alt)", color:a.primary?"#fff":"var(--text-secondary)" }}>
-                        {a.label}
-                        {a.demo && <span style={{ fontSize:9, background:"#fef3c7", color:"#b45309", padding:"1px 4px", borderRadius:2, marginLeft:4 }}>DEMO</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-        {thinking && (
-          <div style={{ display:"flex", alignItems:"center", gap:5, padding:"10px 14px" }}>
-            {[0,1,2].map(i => <span key={i} style={{ width:5, height:5, borderRadius:"50%", background:"var(--text-muted)", display:"inline-block", animation:`dotBounce 1.2s ease ${i*0.15}s infinite` }}/>)}
-            <span style={{ fontSize:11, color:"var(--text-muted)", marginLeft:2 }}>Searching…</span>
-          </div>
-        )}
-        <div ref={bottomRef}/>
-      </div>
-      {messages.length === 1 && (
-        <div style={{ padding:"10px 16px", borderTop:"1px solid var(--border)", display:"flex", gap:6, flexWrap:"wrap" }}>
-          {STARTERS.map(s => (
-            <button key={s} onClick={() => send(s)} style={{ background:"var(--surface-alt)", border:"1px solid var(--border)", cursor:"pointer", padding:"5px 9px", borderRadius:5, fontSize:11, color:"var(--text-secondary)" }}>{s}</button>
-          ))}
-        </div>
-      )}
-      <div style={{ padding:"12px 16px", borderTop:"1px solid var(--border)", display:"flex", gap:8, flexShrink:0 }}>
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
-          placeholder="Search by hazard, sector, measure…"
-          style={{ flex:1, padding:"10px 13px", fontSize:13, border:"1.5px solid var(--border)", borderRadius:7, outline:"none", fontFamily:"'DM Sans',sans-serif", color:"var(--text-primary)", background:"var(--input-bg)" }}
-          onFocus={e => e.target.style.borderColor="var(--accent)"} onBlur={e => e.target.style.borderColor="var(--border)"}
-        />
-        <button onClick={() => send()} style={{ padding:"0 14px", background:"var(--accent)", color:"#fff", border:"none", borderRadius:7, fontSize:14, fontWeight:700, cursor:"pointer" }}>→</button>
-      </div>
-    </div>
-  );
-}
 
 // ── BRIEF TRAY ───────────────────────────────────────────────────────────────
 function BriefTray({ brief, onRemove, onGenerate }) {
@@ -463,6 +411,115 @@ function FilterPill({ label, active, onClick }) {
   );
 }
 
+// ── SUGGEST SOURCE DRAWER ────────────────────────────────────────────────────
+function SuggestSourceDrawer({ open, onClose }) {
+  const [url, setUrl] = useState("");
+  const [note, setNote] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      new URL(url);
+    } catch {
+      setStatus("error");
+      setErrorMsg("Please enter a valid URL (e.g. https://example.com/report).");
+      return;
+    }
+    try {
+      const res = await fetch("/api/hive/suggest-source", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, user_note: note || undefined }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Submission failed.");
+      }
+      setStatus("success");
+      setUrl("");
+      setNote("");
+    } catch (err: any) {
+      setStatus("error");
+      setErrorMsg(err.message || "Something went wrong. Please try again.");
+    }
+  };
+
+  const handleClose = () => { setStatus("idle"); setErrorMsg(""); onClose(); };
+
+  if (!open) return null;
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:60, display:"flex", justifyContent:"flex-end", background:"rgba(0,0,0,0.35)", backdropFilter:"blur(4px)" }} onClick={handleClose}>
+      <div
+        style={{ width:420, maxWidth:"90vw", height:"100%", background:"var(--surface)", borderLeft:"1px solid var(--border)", boxShadow:"-8px 0 32px rgba(0,0,0,0.15)", animation:"slideRight 0.25s ease", display:"flex", flexDirection:"column", fontFamily:"'DM Sans',sans-serif" }}
+        onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div style={{ padding:"20px 24px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:"var(--text-primary)" }}>Suggest a source</h2>
+          <button onClick={handleClose} style={{ width:28, height:28, borderRadius:"50%", background:"var(--surface-alt)", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <svg style={{ width:12, height:12, color:"var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ flex:1, padding:24, overflowY:"auto" }}>
+          {status === "success" ? (
+            <div style={{ textAlign:"center", padding:"40px 16px" }}>
+              <div style={{ width:48, height:48, borderRadius:"50%", background:"#d1fae5", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+                <svg style={{ width:24, height:24, color:"#059669" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <p style={{ fontSize:14, fontWeight:600, color:"var(--text-primary)", margin:"0 0 8px" }}>Thanks!</p>
+              <p style={{ fontSize:13, color:"var(--text-secondary)", lineHeight:1.6 }}>We'll review this source and add it if suitable.</p>
+              <button onClick={handleClose} style={{ marginTop:20, padding:"8px 20px", fontSize:12, fontWeight:600, borderRadius:8, border:"1px solid var(--border)", background:"var(--surface-alt)", color:"var(--text-primary)", cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>Close</button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              <p style={{ fontSize:13, color:"var(--text-secondary)", margin:0, lineHeight:1.6 }}>
+                Know a report, case study, or dataset we should consider? Drop the link below and we'll review it.
+              </p>
+              <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:"var(--text-muted)", marginBottom:6 }}>URL *</label>
+                <input
+                  type="url" required value={url} onChange={e => setUrl(e.target.value)}
+                  placeholder="https://example.com/report.pdf"
+                  style={{ width:"100%", padding:"10px 12px", fontSize:13, border:"1.5px solid var(--input-border)", borderRadius:9, outline:"none", fontFamily:"'DM Sans',sans-serif", color:"var(--text-primary)", background:"var(--input-bg)" }}
+                  onFocus={e => e.target.style.borderColor="var(--accent)"} onBlur={e => e.target.style.borderColor="var(--input-border)"}
+                />
+              </div>
+              <div>
+                <label style={{ display:"block", fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:"var(--text-muted)", marginBottom:6 }}>Your note</label>
+                <textarea
+                  value={note} onChange={e => setNote(e.target.value)}
+                  placeholder="Why do you think this is relevant?"
+                  rows={3}
+                  style={{ width:"100%", padding:"10px 12px", fontSize:13, border:"1.5px solid var(--input-border)", borderRadius:9, outline:"none", fontFamily:"'DM Sans',sans-serif", color:"var(--text-primary)", background:"var(--input-bg)", resize:"vertical" }}
+                  onFocus={e => e.target.style.borderColor="var(--accent)"} onBlur={e => e.target.style.borderColor="var(--input-border)"}
+                />
+              </div>
+
+              {status === "error" && errorMsg && (
+                <div style={{ padding:"10px 14px", borderRadius:8, background:"#fef2f2", border:"1px solid #fecaca", fontSize:12, color:"#b91c1c", lineHeight:1.5 }}>
+                  {errorMsg}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                style={{ padding:"10px 0", fontSize:13, fontWeight:700, borderRadius:10, border:"none", cursor: status === "loading" ? "wait" : "pointer", fontFamily:"'DM Sans',sans-serif", background:"var(--accent)", color:"#fff", opacity: status === "loading" ? 0.7 : 1, transition:"opacity 0.15s" }}>
+                {status === "loading" ? "Submitting…" : "Submit suggestion"}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN PAGE (uses useSearchParams — must be inside Suspense) ─────────────────
 function CasesPageContent() {
   const { themeKey, setThemeKey } = useChatContext();
@@ -491,17 +548,49 @@ function CasesPageContent() {
     if (cost) setCostBands(cost.split(",").map((c) => c.trim()).filter(Boolean));
   }, [searchParams]);
 
+  // View mode toggle: case studies (default) vs individual measures
+  const [viewMode, setViewMode] = useState<'cases' | 'measures'>('cases');
+
   // UI state
-  const [chatOpen, setChatOpen] = useState(false);
   const [highlighted, setHighlighted] = useState([]);
   const [selectedCase, setSelectedCase] = useState(null);
   const [brief, setBrief] = useState([]);
+  const [suggestOpen, setSuggestOpen] = useState(false);
 
   const toggle = (setter, val) => setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
   const toggleBrief = (cs) => setBrief(prev => prev.some(x => x.id === cs.id) ? prev.filter(x => x.id !== cs.id) : [...prev, cs]);
   const hasFilters = query.trim() || sectors.length || hazards.length || transferability.length || costBands.length;
 
   const results = filterAndSort(CASE_STUDIES_NORMALISED, { query, sectors, hazards, transferability, costBands, sort });
+
+  // In measure mode, expand each article into one card per measure
+  const displayItems = useMemo(() => {
+    if (viewMode === 'cases') {
+      return results.map(a => ({
+        type: 'case' as const,
+        key: a.id,
+        article: a,
+        measureName: null as string | null,
+        measureDescription: null as string | null,
+      }));
+    }
+    return results.flatMap(a => {
+      const measuresData = TRIB_MEASURES.find(m => m.trib_article_id === a.id);
+      if (!measuresData?.measures?.length) {
+        const fallbackName = Array.isArray(a.measures) && a.measures.length > 0
+          ? a.measures.join(", ")
+          : a.title;
+        return [{ type: 'measure' as const, key: `${a.id}_0`, article: a, measureName: fallbackName, measureDescription: a.summary }];
+      }
+      return measuresData.measures.map((m, mi) => ({
+        type: 'measure' as const,
+        key: `${a.id}_${mi}`,
+        article: a,
+        measureName: m.name,
+        measureDescription: m.description,
+      }));
+    });
+  }, [results, viewMode]);
 
   const clearAll = () => { setQuery(""); setSectors([]); setHazards([]); setTransferability([]); setCostBands([]); setSort("relevance"); };
 
@@ -555,21 +644,44 @@ function CasesPageContent() {
       <div className="hive-root" style={{ minHeight:"100vh", background:"var(--bg)", fontFamily:"'DM Sans',sans-serif", paddingBottom: brief.length > 0 ? 70 : 0 }}>
         {/* Main content — layout provides single HandbookNav (HIVE → /handbook, Case Studies → /handbook/cases) */}
         <div style={{ maxWidth:1152, margin:"0 auto", padding:"28px 24px 40px",
-          paddingRight: chatOpen ? "calc(24px + 420px)" : "24px", transition:"padding-right 0.25s" }}>
+          transition:"padding-right 0.25s" }}>
 
           {/* Page header */}
           <div style={{ marginBottom:24, display:"flex", alignItems:"center", flexWrap:"wrap", gap:12 }}>
-            <div>
+            <div style={{ flex:1 }}>
               <h1 style={{ fontFamily:"'DM Serif Display',serif", fontSize:28, fontWeight:400, color:"var(--text-primary)", margin:"0 0 8px", lineHeight:1.2 }}>
-                Case Study Library
+                {viewMode === 'cases' ? 'Case Study Library' : 'Adaptation Measures'}
               </h1>
               <p style={{ fontSize:14, color:"var(--text-secondary)", margin:0 }}>
-                {CASE_STUDIES_NORMALISED.length} curated, verified case studies on climate adaptation in transport infrastructure. Filter by sector, hazard, or UK transferability — then build an AI brief from your selection.
+                {viewMode === 'cases'
+                  ? `${CASE_STUDIES_NORMALISED.length} curated, verified case studies on climate adaptation in transport infrastructure. Filter by sector, hazard, or UK transferability — then build an AI brief from your selection.`
+                  : `${TOTAL_MEASURE_COUNT} individual adaptation measures across ${CASE_STUDIES_NORMALISED.length} case studies. Each measure links to its full case study.`
+                }
               </p>
             </div>
             <span style={{ fontSize:12, fontWeight:600, background:"var(--accent-bg)", color:"var(--accent-text)", padding:"4px 10px", borderRadius:6, border:"1px solid var(--border)" }}>
-              {results.length} of {CASE_STUDIES_NORMALISED.length}
+              {displayItems.length}{viewMode === 'cases' ? ` of ${CASE_STUDIES_NORMALISED.length}` : ` measures`}
             </span>
+          </div>
+
+          {/* View mode toggle */}
+          <div style={{ display:"flex", alignItems:"center", gap:4, marginBottom:16, borderRadius:9, padding:2, border:"1px solid var(--border)", background:"var(--surface-alt)", width:"fit-content" }}>
+            <button
+              onClick={() => setViewMode('cases')}
+              style={{ fontSize:12, fontWeight:600, padding:"7px 16px", borderRadius:7, border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"all 0.15s",
+                background: viewMode === 'cases' ? "var(--accent)" : "transparent",
+                color: viewMode === 'cases' ? "#fff" : "var(--text-secondary)",
+              }}>
+              Case Studies ({results.length})
+            </button>
+            <button
+              onClick={() => setViewMode('measures')}
+              style={{ fontSize:12, fontWeight:600, padding:"7px 16px", borderRadius:7, border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"all 0.15s",
+                background: viewMode === 'measures' ? "var(--accent)" : "transparent",
+                color: viewMode === 'measures' ? "#fff" : "var(--text-secondary)",
+              }}>
+              Measures ({viewMode === 'measures' ? displayItems.length : TOTAL_MEASURE_COUNT})
+            </button>
           </div>
 
           {/* FILTER BAR */}
@@ -620,7 +732,7 @@ function CasesPageContent() {
             </div>
 
             {/* Transferability + cost in one row */}
-            <div style={{ display:"flex", gap:24, flexWrap:"wrap" }}>
+            <div style={{ display:"flex", gap:24, flexWrap:"wrap", alignItems:"center" }}>
               <div>
                 <span style={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:"var(--text-muted)", marginRight:10 }}>UK fit</span>
                 <div style={{ display:"inline-flex", gap:6 }}>
@@ -633,6 +745,13 @@ function CasesPageContent() {
                   {COST_BANDS.map(c => <FilterPill key={c} label={c} active={costBands.includes(c)} onClick={() => toggle(setCostBands, c)}/>)}
                 </div>
               </div>
+              <div style={{ marginLeft:"auto" }}>
+                <button onClick={() => setSuggestOpen(true)} style={{ fontSize:11, fontWeight:600, padding:"5px 13px", borderRadius:9999, border:"1.5px dashed var(--border)", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", background:"transparent", color:"var(--text-muted)", transition:"all 0.15s", whiteSpace:"nowrap" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor="var(--accent)"; e.currentTarget.style.color="var(--accent)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text-muted)"; }}>
+                  + Suggest a source
+                </button>
+              </div>
             </div>
           </div>
 
@@ -641,28 +760,41 @@ function CasesPageContent() {
             <div style={{ marginBottom:16, fontSize:13, color:"var(--text-secondary)" }}>
               {results.length === 0
                 ? <span>No cases match your filters. <button onClick={clearAll} style={{ background:"none", border:"none", color:"var(--accent)", cursor:"pointer", fontWeight:600, fontSize:13 }}>Clear filters</button></span>
-                : <span><strong style={{ color:"var(--text-primary)" }}>{results.length}</strong> case {results.length === 1 ? "study" : "studies"} match your filters</span>
+                : viewMode === 'cases'
+                  ? <span><strong style={{ color:"var(--text-primary)" }}>{results.length}</strong> case {results.length === 1 ? "study" : "studies"} match your filters</span>
+                  : <span><strong style={{ color:"var(--text-primary)" }}>{displayItems.length}</strong> {displayItems.length === 1 ? "measure" : "measures"} across <strong>{results.length}</strong> case {results.length === 1 ? "study" : "studies"}</span>
               }
             </div>
           )}
 
           {/* CARD GRID */}
-          {results.length > 0 ? (
+          {displayItems.length > 0 ? (
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(340px, 1fr))", gap:16 }}>
-              {results.map((cs, i) => (
-                <div key={cs.id} className="card-enter" style={{ animationDelay:`${i * 40}ms` }}>
-                  <CaseCard
-                    cs={cs}
-                    onClick={setSelectedCase}
-                    onAddToBrief={toggleBrief}
-                    inBrief={brief.some(b => b.id === cs.id)}
-                    highlighted={highlighted.includes(cs.id)}
-                  />
+              {displayItems.map((item, i) => (
+                <div key={item.key} className="card-enter" style={{ animationDelay:`${Math.min(i, 20) * 40}ms` }}>
+                  {item.type === 'case' ? (
+                    <CaseCard
+                      cs={item.article}
+                      onClick={setSelectedCase}
+                      onAddToBrief={toggleBrief}
+                      inBrief={brief.some(b => b.id === item.article.id)}
+                      highlighted={highlighted.includes(item.article.id)}
+                    />
+                  ) : (
+                    <MeasureCard
+                      measureName={item.measureName}
+                      measureDescription={item.measureDescription}
+                      cs={item.article}
+                      onClick={setSelectedCase}
+                      onAddToBrief={toggleBrief}
+                      inBrief={brief.some(b => b.id === item.article.id)}
+                      highlighted={highlighted.includes(item.article.id)}
+                    />
+                  )}
                 </div>
               ))}
             </div>
           ) : !hasFilters ? (
-            // Default empty (shouldn't happen with real data)
             <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-muted)" }}>
               <div style={{ fontSize:32, marginBottom:12 }}>📂</div>
               <p style={{ fontSize:14 }}>No case studies loaded yet.</p>
@@ -675,27 +807,7 @@ function CasesPageContent() {
           </div>
         </div>
 
-        {/* CHAT DRAWER — slide in from right */}
-        {chatOpen && (
-          <div style={{ position:"fixed", top:0, right:0, bottom:0, width:420, background:"var(--surface)", boxShadow:"-4px 0 32px rgba(0,0,0,0.1)", zIndex:40, display:"flex", flexDirection:"column", animation:"slideRight 0.2s ease", borderLeft:"1px solid var(--border)" }}>
-            <div style={{ padding:"16px 20px", borderBottom:"1px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
-              <div>
-                <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-                  <div style={{ width:20, height:20, borderRadius:4, background:T.accent, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                  </div>
-                  <span style={{ fontSize:13, fontWeight:700, color:"var(--text-primary)" }}>Ask HIVE</span>
-                  <span style={{ fontSize:10, fontWeight:700, background:"#fef3c7", color:"#b45309", padding:"2px 6px", borderRadius:3 }}>DEMO</span>
-                </div>
-                <div style={{ fontSize:11, color:"var(--text-muted)", marginTop:2 }}>Search and explore case studies</div>
-              </div>
-              <button onClick={() => setChatOpen(false)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", fontSize:20, lineHeight:1, padding:4 }}>×</button>
-            </div>
-            <div style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
-              <ChatPanel onHighlight={setHighlighted} onAddToBrief={toggleBrief} brief={brief}/>
-            </div>
-          </div>
-        )}
+        {/* Chat handled by shared ChatPanel in HandbookLayoutClient */}
 
         {/* CASE DETAIL MODAL */}
         {selectedCase && (
@@ -709,6 +821,9 @@ function CasesPageContent() {
 
         {/* BRIEF TRAY */}
         <BriefTray brief={brief} onRemove={toggleBrief} onGenerate={handleGenerate}/>
+
+        {/* SUGGEST SOURCE DRAWER */}
+        <SuggestSourceDrawer open={suggestOpen} onClose={() => setSuggestOpen(false)}/>
       </div>
     </>
   );

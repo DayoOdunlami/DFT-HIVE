@@ -1,5 +1,6 @@
-// ── HIVE Handbook seed data (Phase 3)
-// Stub for Supabase in next step. Import from here; do not hardcode in components.
+// ── HIVE Handbook data
+// Loads from data/case-studies.json when available, falls back to hardcoded seed data.
+// All consumers import from here — never directly from the JSON file.
 
 export type CaseStudy = {
   id: string;
@@ -22,6 +23,8 @@ export type CaseStudy = {
   cost: string;
   costBand: string;
   placeholder?: boolean;
+  sections?: Record<string, string>;
+  source_pdf_url?: string;
 };
 
 export type MarqueeEntry = {
@@ -186,173 +189,106 @@ export const PLACEHOLDER_CASES: Record<string, CaseStudy> = {
   },
 };
 
-export const CASE_STUDIES: CaseStudy[] = [
-  {
-    id: "ID_19",
-    title: "Phoenix Cool Pavement Programme",
-    organisation: "City of Phoenix Street Transportation Department",
-    sector: "Highways",
-    hook: "100+ miles treated · 6°C surface temp reduction · $4.8m annual",
-    hazards: { cause: ["High temperatures", "Urban Heat Island effect"], effect: ["Road surface overheating", "Increased energy demand"] },
-    assets: ["Road pavement"],
-    measures: ["CoolSeal reflective coating", "Pavement maintenance programme", "University monitoring partnership"],
-    location: "Phoenix, USA",
-    ukRegion: "Applicable to UK urban areas",
-    year: "2021–ongoing",
-    cost: "USD $4.8m annual (£3.73m); initial pilot £2.33m",
-    costBand: "£1m–£10m",
-    summary:
-      "Reflective CoolSeal coating applied to 100+ miles of residential roads to combat extreme urban heat island effect. The product increases road reflectivity by 30% and reduces surface temperatures by 6°C, integrated into existing pavement maintenance budgets.",
-    transferability: "Medium",
-    transferabilityNote:
-      "Directly applicable to UK cities experiencing urban heat island intensification. London hotspots already 4.5°C warmer at night than rural surroundings. Heat-related deaths in London more than doubled in 2022. Currently limited to streets with ≤25mph speed limit due to skid resistance constraints.",
-    ukApplicability: ["London urban roads", "Major UK city centres", "Transport for London managed streets", "Local authority highway maintenance programmes"],
-    insight:
-      "Cool pavement also extends road longevity by reducing thermal degradation — delivering avoided maintenance costs beyond the cooling benefit. Funded from existing pavement maintenance budgets, not additional climate spend.",
-    tags: ["highways", "roads", "heat", "urban heat island", "heatwave", "pavement", "reflective coating", "surface temperature", "city"],
-  },
-  {
-    id: "ID_40",
-    title: "Sheffield Grey to Green",
-    organisation: "Sheffield City Council",
-    sector: "Highways",
-    hook: "60% grey to green · discharge cut 80% · 75,000 plants · 561% biodiversity uplift",
-    hazards: { cause: ["Flooding – fluvial", "Flooding – surface water", "Heavy rainfall"], effect: ["Water damage", "Infrastructure disruption"] },
-    assets: ["Road pavement", "Foot and cycle paths", "Rail track", "Trams", "Bridges", "Signals and signalling", "Buildings and stations"],
-    measures: ["Sustainable Drainage Systems (SuDS)", "Rain gardens", "Vegetated swales", "Nature-based solutions", "Green street corridor"],
-    location: "Sheffield, UK",
-    ukRegion: "Yorkshire & Humber",
-    year: "2014–ongoing",
-    cost: "Phase 1 £3.6m; Phase 2 £6.3m; Phase 3 ongoing",
-    costBand: "£1m–£10m per phase",
-    summary:
-      "1.5km urban green corridor replacing a former ring road dual carriageway with Sustainable Drainage Systems following the 2007 floods that caused £30m damage, killed 2 people, closed Sheffield station, cancelled tram services and damaged 28 roads.",
-    transferability: "High",
-    transferabilityNote:
-      "UK case directly applicable nationwide. The largest retrofit grey-to-green project in the UK. Explicitly applicable to rail corridors following river valleys. Cross-sector impact — originally a road project that also protects rail and tram infrastructure downstream.",
-    ukApplicability: ["UK city centre transport corridors", "Rail lines following river valleys", "Urban tram networks", "Local authority highway flood management"],
-    insight:
-      "SuDS reduced river discharge from a 1-in-100-year event by 87% — from 69.6 to 9.2 litres/sec. Inspired an £80m SuDS project in Mansfield. Now the default approach for Sheffield city centre regeneration.",
-    tags: ["highways", "roads", "rail", "tram", "flooding", "surface water", "SuDS", "nature-based", "urban drainage", "heavy rainfall", "green infrastructure", "river valley", "urban flooding"],
-  },
-  {
-    id: "ID_UKPN_01",
-    title: "Croydon Grid Flood Defence",
-    organisation: "UK Power Networks",
-    sector: "Critical Infrastructure",
-    hook: "69,000 customers protected · 1-in-1,000-year flood standard · £800k",
-    hazards: { cause: ["Flooding – fluvial"], effect: ["Power disruption", "Loss of electricity supply to transport networks"] },
-    assets: ["Electrical substation", "Transformers", "Electrical buildings"],
-    measures: ["Permanent flood barriers", "Equipment sealing", "Equipment elevation above flood level", "Flood walls around transformers"],
-    location: "Croydon, London, UK",
-    ukRegion: "London & South East",
-    year: "c.2022–2023",
-    cost: "£800,000 (this site); £14m total programme since 2010",
-    costBand: "Under £1m (site); £10m–£100m (programme)",
-    summary:
-      "Permanent flood barriers installed at Croydon Grid substation to withstand a 1-in-1,000-year flood of the River Wandle, protecting electricity supply to 69,000 homes and businesses including transport infrastructure in South London.",
-    transferability: "High",
-    transferabilityNote:
-      "Part of UK Power Networks' programme that has now protected 119 substations from river, tidal and surface water flooding. Highly relevant to substations supporting rail electrification infrastructure and EV charging networks across South East England.",
-    ukApplicability: ["UK electrical substations in flood-risk zones", "Rail electrification supply infrastructure", "Urban transport power supply", "South East England energy grid"],
-    insight:
-      "Equipment sealing, raising above flood level, and targeted flood walling at a single site cost £800k — part of a £14m programme protecting 119 substations since 2010. Demonstrates that site-specific incremental hardening at modest cost delivers significant network resilience.",
-    tags: ["energy", "flooding", "fluvial", "critical infrastructure", "substation", "power supply", "resilience", "flood barriers", "south london", "rail electrification"],
-  },
-  {
-    id: "ID_32",
-    title: "Heathrow Airport Balancing Ponds",
-    organisation: "Heathrow Airport Ltd",
-    sector: "Aviation",
-    hook: "Year-round flow control · £2.1m bundled into wider programme",
-    hazards: { cause: ["Heavy rainfall", "Drought"], effect: ["Flooding – fluvial", "Flooding – surface water"] },
-    assets: ["Access routes", "Airport services"],
-    measures: ["Balancing ponds", "Tilting weirs", "Nature-based solution", "MBBR wastewater treatment"],
-    location: "London, UK",
-    ukRegion: "London & South East",
-    year: "2016–2022",
-    cost: "£2.1m (sheet piling component)",
-    costBand: "£1m–£10m",
-    summary:
-      "Constructed balancing ponds to manage both drought and heavy rainfall events, controlling water volume entering drainage systems and reducing flood risk to airport access routes.",
-    transferability: "High",
-    transferabilityNote:
-      "Tilting weir systems and Nature-based Solutions directly applicable to other airports, ports, and urban transport infrastructure facing surface water flooding.",
-    ukApplicability: ["Other UK airports", "Urban transport hubs", "Coastal infrastructure"],
-    insight:
-      "Integrating climate adaptation into planned development activities kept costs minimal — bundled with a wider infrastructure programme rather than treated as standalone.",
-    tags: ["aviation", "flooding", "drought", "nature-based", "urban drainage", "water management", "heavy rainfall", "surface water"],
-  },
-  {
-    id: "ID_06",
-    title: "Austrian Federal Railways Climate Adaptation",
-    organisation: "Austrian Federal Railways (ÖBB)",
-    sector: "Rail",
-    hook: "212km barriers · 3,370ha protected forest · sensors across Alpine network",
-    hazards: { cause: ["Heavy rainfall", "Storms", "Freeze-thaw cycles"], effect: ["Landslides", "Rockfalls", "Flooding – fluvial"] },
-    assets: ["Track", "Bridges", "Earthworks", "Signalling", "Level crossings"],
-    measures: ["Slope stabilisation", "Rockfall barriers", "Flood retention basins", "Early warning systems", "Real-time geotechnical monitoring"],
-    location: "Alpine regions, Austria",
-    ukRegion: "Applicable UK-wide",
-    year: "2005–present",
-    cost: "€3bn+ annual infrastructure budget",
-    costBand: "Large programme",
-    summary:
-      "Comprehensive physical and predictive technology adaptations across the Alpine rail network, combining slope stabilisation, protective barriers and geotechnical sensor monitoring.",
-    transferability: "High",
-    transferabilityNote:
-      "Rockfall barriers, drainage management and slope stabilisation directly applicable to UK upland rail. Particularly relevant to the Peak District, Scottish Highlands, and Welsh valley lines.",
-    ukApplicability: ["UK upland rail", "Scottish Highlands lines", "Welsh Valley lines", "Peak District infrastructure"],
-    insight:
-      "Site-specific assessment — combining damage history, local conditions, and vulnerability analysis — was more effective than blanket solutions. Early warning systems reduced reactive maintenance costs significantly.",
-    tags: ["rail", "landslide", "flooding", "sensors", "monitoring", "earthworks", "slope", "embankment", "precipitation", "rockfall"],
-  },
-  {
-    id: "ID_01",
-    title: "Port of Calais Extension and Sea Defence",
-    organisation: "Société des Ports du Détroit",
-    sector: "Maritime",
-    hook: "3.3km seawall · 100-year design life · €863m total",
-    hazards: { cause: ["Sea level rise", "Storms and high winds"], effect: ["Storm surge", "Coastal flooding", "Coastal erosion"] },
-    assets: ["Port structures", "Terminal", "Retaining walls"],
-    measures: ["3.3km sea wall", "Land reclamation", "Reinforced retaining walls", "100-year design life specification"],
-    location: "Calais, France",
-    ukRegion: "Applicable to UK coastal",
-    year: "2021",
-    cost: "€863m total project",
-    costBand: "£100m+",
-    summary:
-      "Doubled port capacity while building a 3.3km seawall designed for 100-year service life, explicitly accounting for sea level rise and climate change projections in all structural specifications.",
-    transferability: "High",
-    transferabilityNote:
-      "Directly applicable to UK ports facing sea level rise risk. Humber Ports specifically identified as having medium sea level rise risk.",
-    ukApplicability: ["Humber Ports", "Port of Dover", "Thames Estuary infrastructure", "East coast ports"],
-    insight:
-      "Treating climate resilience as a core design requirement from the outset — not as an add-on — allowed the seawall to be cost-effectively integrated into a wider port upgrade.",
-    tags: ["maritime", "ports", "sea level rise", "storm surge", "coastal", "flooding", "seawall", "infrastructure"],
-  },
-  {
-    id: "ID_11",
-    title: "Deutsche Bahn Climate Adaptation Measures",
-    organisation: "Deutsche Bahn",
-    sector: "Rail",
-    hook: "25% storm damage reduction · 20% fewer heat disruptions · IoT across national network",
-    hazards: { cause: ["High temperatures", "Storms and high winds"], effect: ["Vegetation dieback", "Storm damage", "Track overheating"] },
-    assets: ["Tracks", "Trains", "Overhead lines", "Lineside vegetation"],
-    measures: ["Air-conditioned rolling stock (ICE 4)", "AI-assisted vegetation mapping", "IoT temperature sensors", "DB Climate Forest programme"],
-    location: "Germany",
-    ukRegion: "Applicable UK-wide",
-    year: "2007–2024",
-    cost: "€6bn (ICE 4 fleet); €625m (vegetation programme)",
-    costBand: "Large programme",
-    summary:
-      "Phased adaptation combining air-conditioned rolling stock, AI-assisted vegetation management via satellite data, and IoT sensor networks to address escalating heat and storm risks.",
-    transferability: "High",
-    transferabilityNote:
-      "Vegetation management and rolling stock air-conditioning directly applicable to UK rail. Highest priority in South and East England where temperatures are projected to reach higher peaks.",
-    ukApplicability: ["Network Rail Southern region", "East Midlands Railway", "UK rolling stock procurement", "Lineside vegetation management"],
-    insight:
-      "Vegetation management delivered 25% reduction in storm damage between 2018 and 2020 — one of the highest ROI findings in the HIVE database. Heat disruptions fell 20% after ICE 4 deployment.",
-    tags: ["rail", "heat", "temperature", "vegetation", "sensors", "rolling stock", "storms", "heatwave", "overheating"],
-  },
-];
+// Hand-curated rich entries (7 original) — used as enrichment overrides
+const SEED_OVERRIDES: Record<string, Partial<CaseStudy>> = {
+  ID_19: { title: "Phoenix Cool Pavement Programme", sector: "Highways", hook: "100+ miles treated · 6°C surface temp reduction · $4.8m annual", hazards: { cause: ["High temperatures", "Urban Heat Island effect"], effect: ["Road surface overheating", "Increased energy demand"] }, assets: ["Road pavement"], measures: ["CoolSeal reflective coating", "Pavement maintenance programme", "University monitoring partnership"], ukRegion: "Applicable to UK urban areas", cost: "USD $4.8m annual (£3.73m); initial pilot £2.33m", costBand: "£1m–£10m", summary: "Reflective CoolSeal coating applied to 100+ miles of residential roads to combat extreme urban heat island effect. The product increases road reflectivity by 30% and reduces surface temperatures by 6°C, integrated into existing pavement maintenance budgets.", transferability: "Medium", transferabilityNote: "Directly applicable to UK cities experiencing urban heat island intensification. London hotspots already 4.5°C warmer at night than rural surroundings. Heat-related deaths in London more than doubled in 2022. Currently limited to streets with ≤25mph speed limit due to skid resistance constraints.", ukApplicability: ["London urban roads", "Major UK city centres", "Transport for London managed streets", "Local authority highway maintenance programmes"], insight: "Cool pavement also extends road longevity by reducing thermal degradation — delivering avoided maintenance costs beyond the cooling benefit. Funded from existing pavement maintenance budgets, not additional climate spend.", tags: ["highways", "roads", "heat", "urban heat island", "heatwave", "pavement", "reflective coating", "surface temperature", "city"] },
+  ID_40: { title: "Sheffield Grey to Green", sector: "Highways", hook: "60% grey to green · discharge cut 80% · 75,000 plants · 561% biodiversity uplift", hazards: { cause: ["Flooding – fluvial", "Flooding – surface water", "Heavy rainfall"], effect: ["Water damage", "Infrastructure disruption"] }, assets: ["Road pavement", "Foot and cycle paths", "Rail track", "Trams", "Bridges", "Signals and signalling", "Buildings and stations"], measures: ["Sustainable Drainage Systems (SuDS)", "Rain gardens", "Vegetated swales", "Nature-based solutions", "Green street corridor"], ukRegion: "Yorkshire & Humber", cost: "Phase 1 £3.6m; Phase 2 £6.3m; Phase 3 ongoing", costBand: "£1m–£10m per phase", summary: "1.5km urban green corridor replacing a former ring road dual carriageway with Sustainable Drainage Systems following the 2007 floods that caused £30m damage, killed 2 people, closed Sheffield station, cancelled tram services and damaged 28 roads.", transferability: "High", transferabilityNote: "UK case directly applicable nationwide. The largest retrofit grey-to-green project in the UK. Explicitly applicable to rail corridors following river valleys. Cross-sector impact — originally a road project that also protects rail and tram infrastructure downstream.", ukApplicability: ["UK city centre transport corridors", "Rail lines following river valleys", "Urban tram networks", "Local authority highway flood management"], insight: "SuDS reduced river discharge from a 1-in-100-year event by 87% — from 69.6 to 9.2 litres/sec. Inspired an £80m SuDS project in Mansfield. Now the default approach for Sheffield city centre regeneration.", tags: ["highways", "roads", "rail", "tram", "flooding", "surface water", "SuDS", "nature-based", "urban drainage", "heavy rainfall", "green infrastructure", "river valley", "urban flooding"] },
+  ID_UKPN_01: { title: "Croydon Grid Flood Defence", sector: "Critical Infrastructure", hook: "69,000 customers protected · 1-in-1,000-year flood standard · £800k", hazards: { cause: ["Flooding – fluvial"], effect: ["Power disruption", "Loss of electricity supply to transport networks"] }, assets: ["Electrical substation", "Transformers", "Electrical buildings"], measures: ["Permanent flood barriers", "Equipment sealing", "Equipment elevation above flood level", "Flood walls around transformers"], ukRegion: "London & South East", cost: "£800,000 (this site); £14m total programme since 2010", costBand: "Under £1m (site); £10m–£100m (programme)", summary: "Permanent flood barriers installed at Croydon Grid substation to withstand a 1-in-1,000-year flood of the River Wandle, protecting electricity supply to 69,000 homes and businesses including transport infrastructure in South London.", transferability: "High", transferabilityNote: "Part of UK Power Networks' programme that has now protected 119 substations from river, tidal and surface water flooding. Highly relevant to substations supporting rail electrification infrastructure and EV charging networks across South East England.", ukApplicability: ["UK electrical substations in flood-risk zones", "Rail electrification supply infrastructure", "Urban transport power supply", "South East England energy grid"], insight: "Equipment sealing, raising above flood level, and targeted flood walling at a single site cost £800k — part of a £14m programme protecting 119 substations since 2010. Demonstrates that site-specific incremental hardening at modest cost delivers significant network resilience.", tags: ["energy", "flooding", "fluvial", "critical infrastructure", "substation", "power supply", "resilience", "flood barriers", "south london", "rail electrification"] },
+  ID_32: { title: "Heathrow Airport Balancing Ponds", sector: "Aviation", hook: "Year-round flow control · £2.1m bundled into wider programme", hazards: { cause: ["Heavy rainfall", "Drought"], effect: ["Flooding – fluvial", "Flooding – surface water"] }, assets: ["Access routes", "Airport services"], measures: ["Balancing ponds", "Tilting weirs", "Nature-based solution", "MBBR wastewater treatment"], ukRegion: "London & South East", cost: "£2.1m (sheet piling component)", costBand: "£1m–£10m", summary: "Constructed balancing ponds to manage both drought and heavy rainfall events, controlling water volume entering drainage systems and reducing flood risk to airport access routes.", transferability: "High", transferabilityNote: "Tilting weir systems and Nature-based Solutions directly applicable to other airports, ports, and urban transport infrastructure facing surface water flooding.", ukApplicability: ["Other UK airports", "Urban transport hubs", "Coastal infrastructure"], insight: "Integrating climate adaptation into planned development activities kept costs minimal — bundled with a wider infrastructure programme rather than treated as standalone.", tags: ["aviation", "flooding", "drought", "nature-based", "urban drainage", "water management", "heavy rainfall", "surface water"] },
+  ID_06: { title: "Austrian Federal Railways Climate Adaptation", sector: "Rail", hook: "212km barriers · 3,370ha protected forest · sensors across Alpine network", hazards: { cause: ["Heavy rainfall", "Storms", "Freeze-thaw cycles"], effect: ["Landslides", "Rockfalls", "Flooding – fluvial"] }, assets: ["Track", "Bridges", "Earthworks", "Signalling", "Level crossings"], measures: ["Slope stabilisation", "Rockfall barriers", "Flood retention basins", "Early warning systems", "Real-time geotechnical monitoring"], ukRegion: "Applicable UK-wide", cost: "€3bn+ annual infrastructure budget", costBand: "Large programme", summary: "Comprehensive physical and predictive technology adaptations across the Alpine rail network, combining slope stabilisation, protective barriers and geotechnical sensor monitoring.", transferability: "High", transferabilityNote: "Rockfall barriers, drainage management and slope stabilisation directly applicable to UK upland rail. Particularly relevant to the Peak District, Scottish Highlands, and Welsh valley lines.", ukApplicability: ["UK upland rail", "Scottish Highlands lines", "Welsh Valley lines", "Peak District infrastructure"], insight: "Site-specific assessment — combining damage history, local conditions, and vulnerability analysis — was more effective than blanket solutions. Early warning systems reduced reactive maintenance costs significantly.", tags: ["rail", "landslide", "flooding", "sensors", "monitoring", "earthworks", "slope", "embankment", "precipitation", "rockfall"] },
+  ID_01: { title: "Port of Calais Extension and Sea Defence", sector: "Maritime", hook: "3.3km seawall · 100-year design life · €863m total", hazards: { cause: ["Sea level rise", "Storms and high winds"], effect: ["Storm surge", "Coastal flooding", "Coastal erosion"] }, assets: ["Port structures", "Terminal", "Retaining walls"], measures: ["3.3km sea wall", "Land reclamation", "Reinforced retaining walls", "100-year design life specification"], ukRegion: "Applicable to UK coastal", cost: "€863m total project", costBand: "£100m+", summary: "Doubled port capacity while building a 3.3km seawall designed for 100-year service life, explicitly accounting for sea level rise and climate change projections in all structural specifications.", transferability: "High", transferabilityNote: "Directly applicable to UK ports facing sea level rise risk. Humber Ports specifically identified as having medium sea level rise risk.", ukApplicability: ["Humber Ports", "Port of Dover", "Thames Estuary infrastructure", "East coast ports"], insight: "Treating climate resilience as a core design requirement from the outset — not as an add-on — allowed the seawall to be cost-effectively integrated into a wider port upgrade.", tags: ["maritime", "ports", "sea level rise", "storm surge", "coastal", "flooding", "seawall", "infrastructure"] },
+  ID_11: { title: "Deutsche Bahn Climate Adaptation Measures", sector: "Rail", hook: "25% storm damage reduction · 20% fewer heat disruptions · IoT across national network", hazards: { cause: ["High temperatures", "Storms and high winds"], effect: ["Vegetation dieback", "Storm damage", "Track overheating"] }, assets: ["Tracks", "Trains", "Overhead lines", "Lineside vegetation"], measures: ["Air-conditioned rolling stock (ICE 4)", "AI-assisted vegetation mapping", "IoT temperature sensors", "DB Climate Forest programme"], ukRegion: "Applicable UK-wide", cost: "€6bn (ICE 4 fleet); €625m (vegetation programme)", costBand: "Large programme", summary: "Phased adaptation combining air-conditioned rolling stock, AI-assisted vegetation management via satellite data, and IoT sensor networks to address escalating heat and storm risks.", transferability: "High", transferabilityNote: "Vegetation management and rolling stock air-conditioning directly applicable to UK rail. Highest priority in South and East England where temperatures are projected to reach higher peaks.", ukApplicability: ["Network Rail Southern region", "East Midlands Railway", "UK rolling stock procurement", "Lineside vegetation management"], insight: "Vegetation management delivered 25% reduction in storm damage between 2018 and 2020 — one of the highest ROI findings in the HIVE database. Heat disruptions fell 20% after ICE 4 deployment.", tags: ["rail", "heat", "temperature", "vegetation", "sensors", "rolling stock", "storms", "heatwave", "overheating"] },
+};
+
+// Sector mapping from PDF metadata values to display sectors
+const SECTOR_MAP: Record<string, string> = {
+  "railways": "Rail", "rail": "Rail",
+  "aviation": "Aviation",
+  "ports, coastal and offshore": "Maritime", "maritime": "Maritime", "ports": "Maritime",
+  "highways": "Highways", "roads": "Highways",
+  "inland waterways": "Maritime",
+  "multiple": "Multiple",
+};
+
+function mapSector(raw?: string | null): string {
+  if (!raw) return "Highways";
+  const lower = raw.toLowerCase().trim();
+  return SECTOR_MAP[lower] ?? raw;
+}
+
+function mapJsonToCaseStudy(json: any): CaseStudy {
+  const id = json.trib_id;
+  const override = SEED_OVERRIDES[id];
+  const challengeText = json.sections?.challenge ?? "";
+  const adaptText = json.sections?.adaptation_measures ?? "";
+  const summaryFallback = challengeText
+    ? challengeText.split(". ").slice(0, 3).join(". ") + "."
+    : "";
+
+  return {
+    id,
+    title: override?.title ?? json.organisation ?? id,
+    organisation: json.organisation ?? "",
+    sector: override?.sector ?? mapSector(json.transport_subsector),
+    hook: override?.hook ?? (json.measure_title ?? "").slice(0, 80),
+    hazards: override?.hazards ?? {
+      cause: json.hazard_cause ? json.hazard_cause.split(", ").filter(Boolean) : [],
+      effect: json.hazard_effect ? json.hazard_effect.split(", ").filter(Boolean) : [],
+    },
+    summary: override?.summary ?? json.case_study_text ?? summaryFallback,
+    transferability: override?.transferability ?? "Medium",
+    transferabilityNote: override?.transferabilityNote ?? json.sections?.applicability?.split(". ").slice(0, 2).join(". ") ?? "—",
+    ukApplicability: override?.ukApplicability ?? [],
+    insight: override?.insight ?? json.sections?.evaluation?.split(". ").slice(0, 2).join(". ") ?? "—",
+    measures: override?.measures ?? (json.measures?.length ? json.measures : json.measure_title ? [json.measure_title] : []),
+    assets: override?.assets ?? (json.asset_type ? json.asset_type.split(", ").filter(Boolean) : []),
+    tags: override?.tags ?? [],
+    location: json.sections ? (json.organisation ?? "—") : "—",
+    ukRegion: override?.ukRegion ?? "—",
+    year: "—",
+    cost: override?.cost ?? "—",
+    costBand: override?.costBand ?? "—",
+    sections: json.sections,
+    source_pdf_url: json.source_pdf_url,
+  };
+}
+
+// Load from JSON file, falling back to hardcoded overrides
+let _caseStudies: CaseStudy[] | null = null;
+
+function loadCaseStudies(): CaseStudy[] {
+  if (_caseStudies) return _caseStudies;
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const jsonData = require("@/data/case-studies.json") as any[];
+    _caseStudies = jsonData.map(mapJsonToCaseStudy);
+    return _caseStudies;
+  } catch {
+    // Fall back to the 7 hand-curated overrides
+    _caseStudies = Object.entries(SEED_OVERRIDES).map(([id, o]) => ({
+      id,
+      title: o.title ?? id,
+      organisation: o.title ?? "",
+      sector: o.sector ?? "Highways",
+      hook: o.hook ?? "",
+      hazards: o.hazards ?? { cause: [], effect: [] },
+      summary: o.summary ?? "",
+      transferability: o.transferability ?? "Medium",
+      transferabilityNote: o.transferabilityNote ?? "—",
+      ukApplicability: o.ukApplicability ?? [],
+      insight: o.insight ?? "—",
+      measures: o.measures ?? [],
+      assets: o.assets ?? [],
+      tags: o.tags ?? [],
+      location: "—",
+      ukRegion: o.ukRegion ?? "—",
+      year: "—",
+      cost: o.cost ?? "—",
+      costBand: o.costBand ?? "—",
+    }));
+    return _caseStudies;
+  }
+}
+
+export const CASE_STUDIES: CaseStudy[] = loadCaseStudies();

@@ -193,7 +193,8 @@ function TypingDots() {
 }
 
 export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
-  const { messages, setMessages } = useChatContext();
+  const { messages, setMessages, sessionIntent, setRetrievalMode, retrievalMode } =
+    useChatContext();
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -227,10 +228,24 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
       const res = await fetch("/api/handbook/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updatedMessages, context }),
+        body: JSON.stringify({
+          messages: updatedMessages,
+          context,
+          session_intent: sessionIntent || undefined,
+        }),
       });
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "ai", ...data }]);
+      if (data.retrieval_mode) setRetrievalMode(data.retrieval_mode);
+      const aiMsg: ChatMessage = {
+        role: "ai",
+        text: data.message ?? data.text ?? "",
+        chips: data.chips,
+        gap: data.gap,
+        actions: data.actions,
+        sources: data.sources,
+        retrieval_mode: data.retrieval_mode,
+      };
+      setMessages((prev) => [...prev, aiMsg]);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -598,9 +613,22 @@ export function ChatPanel({ context, open, onClose }: ChatPanelProps) {
               color: "#9ca3af",
               margin: "6px 0 0",
               lineHeight: 1.4,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
-            AI-generated · HIVE · Review source records before citing
+            {retrievalMode === "rag" && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#059669" }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#059669", display: "inline-block" }} />
+                Connected to knowledge base
+              </span>
+            )}
+            {retrievalMode === "fallback" && (
+              <span style={{ color: "#d97706" }}>Offline mode — example responses</span>
+            )}
+            {!retrievalMode && "AI-generated · HIVE"}
+            <span style={{ marginLeft: "auto" }}>Review sources before citing</span>
           </p>
         </div>
       </div>

@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   ReactNode,
   Dispatch,
   SetStateAction,
@@ -17,6 +18,8 @@ export type ChatMessage = {
   chips?: string[];
   gap?: string | null;
   actions?: Array<{ label: string; primary?: boolean; demo?: boolean }>;
+  sources?: string[];
+  retrieval_mode?: "rag" | "fallback";
 };
 
 type HandbookContextType = {
@@ -35,9 +38,15 @@ type HandbookContextType = {
   themeKey: ThemeKey;
   setThemeKey: (key: ThemeKey) => void;
   theme: Theme;
+  sessionIntent: string;
+  setSessionIntent: (intent: string) => void;
+  retrievalMode: "rag" | "fallback" | null;
+  setRetrievalMode: (mode: "rag" | "fallback" | null) => void;
 };
 
 const HandbookContext = createContext<HandbookContextType | null>(null);
+
+const SESSION_INTENT_KEY = "hiveSessionIntent";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
@@ -45,12 +54,32 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [briefIds, setBriefIds] = useState<string[]>([]);
   const [themeKey, setThemeKey] = useState<ThemeKey>("light");
+  const [sessionIntent, setSessionIntentState] = useState("");
+  const [retrievalMode, setRetrievalMode] = useState<
+    "rag" | "fallback" | null
+  >(null);
   const theme = THEMES[themeKey];
 
-  const openChat = useCallback((context?: string) => {
-    if (context) setChatContext(context);
-    setChatOpen(true);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = sessionStorage.getItem(SESSION_INTENT_KEY);
+    if (stored) setSessionIntentState(stored);
   }, []);
+
+  const setSessionIntent = useCallback((intent: string) => {
+    setSessionIntentState(intent);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(SESSION_INTENT_KEY, intent);
+    }
+  }, []);
+
+  const openChat = useCallback(
+    (context?: string) => {
+      if (context) setChatContext(context);
+      setChatOpen(true);
+    },
+    []
+  );
 
   const closeChat = useCallback(() => setChatOpen(false), []);
 
@@ -82,6 +111,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         themeKey,
         setThemeKey,
         theme,
+        sessionIntent,
+        setSessionIntent,
+        retrievalMode,
+        setRetrievalMode,
       }}
     >
       {children}

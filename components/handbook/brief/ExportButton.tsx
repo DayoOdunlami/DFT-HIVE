@@ -1,30 +1,36 @@
 "use client";
 
+interface BriefSection {
+  section_key: string;
+  section_title: string;
+  content: string;
+  confidence?: string;
+}
+
 interface ExportButtonProps {
   ids: string[];
+  sections?: BriefSection[];
   disabled?: boolean;
 }
 
-export function ExportButton({ ids, disabled }: ExportButtonProps) {
+export function ExportButton({ ids, sections, disabled }: ExportButtonProps) {
   const handleExport = async () => {
     try {
       const res = await fetch("/api/handbook/brief/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
+        body: JSON.stringify({ ids, sections: sections ?? [] }),
       });
       if (!res.ok) throw new Error("Export failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `HIVE-Brief-${new Date().toISOString().slice(0, 10)}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const html = await res.text();
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+      }
     } catch {
-      // PDF export is a Step 9 feature — show notice for now
       alert(
-        "PDF export will be available in the next release. For now, use your browser's print function (Ctrl/Cmd+P)."
+        "PDF export encountered an error. You can also use your browser's print function (Ctrl/Cmd+P) on the brief page."
       );
     }
   };

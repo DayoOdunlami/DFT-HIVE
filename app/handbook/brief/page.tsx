@@ -1,6 +1,8 @@
 "use client"
 import { useState, useEffect, useRef } from "react";
 import { CASE_STUDIES } from "@/lib/hive/seed-data";
+import { useChatContext } from "@/components/handbook/shared/ChatContext";
+import { ChatPanel } from "@/components/handbook/shared/ChatPanel";
 
 const T = {
   bg:"#f8f7f4", surface:"#ffffff", surfaceAlt:"#f3f1ec",
@@ -426,7 +428,7 @@ export default function HIVEBriefWithChat(){
   const [summaryOverride, setSummaryOverride] = useState<string | null>(null);
   const [sectionOverrides, setSectionOverrides] = useState<Record<string, string>>({});
   const [activeCase, setActiveCase] = useState<string | null>(null);
-  const [chatOpen, setChatOpen] = useState(false);
+  const { chatOpen, openChat, closeChat, setChatContext: setSharedChatContext } = useChatContext();
   const [activeSection, setActiveSection] = useState("summary");
   const [building, setBuilding] = useState(true);
   const [shown, setShown] = useState(0);
@@ -458,6 +460,13 @@ export default function HIVEBriefWithChat(){
     const t=setInterval(()=>setShown(s=>{if(s>=6){setBuilding(false);clearInterval(t);return s;}return s+1;}),380);
     return()=>clearInterval(t);
   },[building]);
+
+  useEffect(() => {
+    const ids = briefCases.map(c => c.id).filter(Boolean);
+    if (ids.length > 0) {
+      setSharedChatContext(`brief:${ids.join(",")}`);
+    }
+  }, [briefCases, setSharedChatContext]);
 
   const applyOverride = (section: string, content: string) => setSectionOverrides(p => ({ ...p, [section]: content }));
   const clearOverride = (section: string) => setSectionOverrides(p => { const n = { ...p }; delete n[section]; return n; });
@@ -514,8 +523,7 @@ export default function HIVEBriefWithChat(){
               <button onClick={clearBrief} style={{background:"none",border:`1px solid ${T.border}`,cursor:"pointer",padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:600,color:T.textSec}}>Clear brief</button>
             )}
             <button style={{background:"none",border:`1px solid ${T.border}`,cursor:"pointer",padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:600,color:T.textSec}}>↓ PDF</button>
-            {/* Chat toggle — key new element on brief page */}
-            <button onClick={()=>setChatOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:7,fontSize:12,fontWeight:700,cursor:"pointer",transition:"all 0.15s",background:chatOpen?T.accent:T.surface,color:chatOpen?"#fff":T.accent,border:`1.5px solid ${T.accent}`}}>
+            <button onClick={()=>chatOpen ? closeChat() : openChat()} style={{display:"flex",alignItems:"center",gap:6,padding:"7px 14px",borderRadius:7,fontSize:12,fontWeight:700,cursor:"pointer",transition:"all 0.15s",background:chatOpen?T.accent:T.surface,color:chatOpen?"#fff":T.accent,border:`1.5px solid ${T.accent}`}}>
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
               {chatOpen?"Close":"Ask about this brief"}
             </button>
@@ -744,10 +752,10 @@ export default function HIVEBriefWithChat(){
                 </div>
               </div>
               {/* Prompt to use chat */}
-              {!chatOpen&&(
+              {!chatOpen && (
                 <div style={{marginTop:14,padding:"12px 16px",background:T.surfaceAlt,borderRadius:8,border:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <span style={{fontSize:12,color:T.textSec}}>Want to reframe this insight for a specific audience or check what's missing?</span>
-                  <button onClick={()=>setChatOpen(true)} style={{flexShrink:0,padding:"6px 12px",background:T.accent,color:"#fff",border:"none",borderRadius:6,fontSize:11,fontWeight:700,cursor:"pointer",marginLeft:12}}>Ask HIVE →</button>
+                  <button onClick={()=>openChat()} style={{flexShrink:0,padding:"6px 12px",background:T.accent,color:"#fff",border:"none",borderRadius:6,fontSize:11,fontWeight:700,cursor:"pointer",marginLeft:12}}>Ask HIVE →</button>
                 </div>
               )}
             </div>
@@ -820,35 +828,12 @@ export default function HIVEBriefWithChat(){
         </div>
       </div>
 
-      {/* Brief chat drawer */}
-      {chatOpen&&(
-        <div style={{position:"fixed",top:0,right:0,bottom:0,width:420,background:"#fff",boxShadow:"-4px 0 32px rgba(0,0,0,0.08)",zIndex:40,display:"flex",flexDirection:"column",animation:"slideRight 0.2s ease",borderLeft:`1px solid ${T.border}`}}>
-          <div style={{padding:"16px 20px",borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-            <div>
-              <div style={{display:"flex",alignItems:"center",gap:7}}>
-                <div style={{width:20,height:20,borderRadius:4,background:T.accent,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                </div>
-                <span style={{fontSize:13,fontWeight:700,color:T.text}}>Ask about this brief</span>
-                <span style={{fontSize:10,fontWeight:700,background:T.amberLight,color:T.amber,padding:"2px 6px",borderRadius:3,border:`1px solid #fcd34d`}}>DEMO</span>
-              </div>
-              <div style={{fontSize:11,color:T.textMuted,marginTop:2}}>Interrogate, reframe, or extend this report</div>
-            </div>
-            <button onClick={()=>setChatOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:T.textMuted,fontSize:20,lineHeight:1,padding:4}}>×</button>
-          </div>
-          <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-            <BriefChatPanel
-              briefCases={displayCases}
-              onAddCase={c => setBriefCases(prev => [...prev, c])}
-              onApplyOverride={applyOverride}
-              onClearOverride={clearOverride}
-              summaryOverride={summaryOverride}
-              onSetSummaryOverride={setSummaryOverride}
-              isTutorial={isTutorial}
-            />
-          </div>
-        </div>
-      )}
+      {/* Shared ChatPanel — synthesis mode, context set via useChatContext */}
+      <ChatPanel
+        context={`brief:${displayCases.map(c => c.id).join(",")}`}
+        open={chatOpen}
+        onClose={closeChat}
+      />
     </div>
   );
 }

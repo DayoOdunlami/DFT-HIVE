@@ -1,0 +1,284 @@
+[
+  {
+    "trib_article_id": "ID_01",
+    "project_title": "Port of Calais Extension and Sea Defence",
+    "measures": [
+      { "name": "Port extension", "description": "A port extension designed to accommodate more and larger ships while protecting the port from rising sea level and storm surges." },
+      { "name": "Sea defence", "description": "A new 3.3 km-long seawall and 100-hectare port basin, dug to accommodate larger ships." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_02",
+    "project_title": "Prince Edward Island",
+    "measures": [
+      { "name": "Intertidal reefs", "description": "Dune restoration and shoreline stabilisation works, including the creation of two intertidal reefs." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_03",
+    "project_title": "Copenhagen Metro",
+    "measures": [
+      { "name": "Waterproof tunnel designs", "description": "Installations of waterproof outer doors and waterproof walls in stations, equipment rooms and electrical and mechanical installations." },
+      { "name": "Improved drainage", "description": "Drains, drainage gates and water pumping systems." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_04",
+    "project_title": "New locks in the Albert Canal",
+    "measures": [
+      { "name": "Archimedes screws installed in pumping", "description": "Archimedes screws pump water back up the canal lost during ship lockage, maintaining water levels during droughts." },
+      { "name": "Hydroelectric power stations", "description": "Archimedes screws generate renewable energy in times of high water levels, mainly in winter." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_06",
+    "project_title": "Austrian Federal Railways Climate Adaptation Measures",
+    "measures": [
+      { "name": "Slope stabilisation", "description": "Slope stabilisation to mitigate landslide and rockfall risks." },
+      { "name": "Rockfall barriers", "description": "Rockfall barriers to mitigate landslide and rockfall risks." },
+      { "name": "Flood defences", "description": "Installation of flood retention basins to manage water runoff." },
+      { "name": "Drainage systems", "description": "Installation of improved drainage systems to manage water runoff." },
+      { "name": "Early warning systems", "description": "Geotechnical sensors and weather forecasting tools to predict hazards and allow timely interventions." },
+      { "name": "Real-time monitoring", "description": "Real-time monitoring technologies such as geotechnical sensors." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_07",
+    "project_title": "MTA Saint George Terminal",
+    "measures": [
+      { "name": "Installation of flood protection devices", "description": "Flex gates, marine doors, and over 3,000 flood barriers at subway stations." },
+      { "name": "Rehabilitation of under-river tunnels", "description": "Under-river tunnel rehabilitation and flood walls around key areas." },
+      { "name": "Elevating of critical equipment", "description": "New signal room elevated 12 feet above ground; flood walls spanning 1,111 feet." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_09",
+    "project_title": "CIPA Port Wharf Climate Proofing",
+    "measures": [
+      { "name": "Wharf height increase", "description": "Raising the main berth by 0.5 metres to adapt to rising sea levels." },
+      { "name": "Rock armour", "description": "Rock armour to extend the western breakwater by 92m, protecting from erosion and storm surges." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_10",
+    "project_title": "Infrabel Climate Adaptation Measures",
+    "measures": [
+      { "name": "Tension release devices", "description": "Devices to prevent rail tracks from buckling during high temperatures or fracturing during low temperatures." },
+      { "name": "Storm basins", "description": "Storm basins to mitigate potential flooding in flood-prone areas." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_11",
+    "project_title": "Deutsche Bahn Climate Adaptation Measures",
+    "measures": [
+      { "name": "Air-conditioned trains", "description": "ICE 4 long-distance trains with air-conditioning capable of coping with external temperatures up to 45°C." },
+      { "name": "Vegetation management", "description": "Investment in vegetation management to mitigate the impacts of storms and falling trees." },
+      { "name": "Environmental sensors", "description": "IoT sensor technology monitoring ambient temperature, particle load and humidity." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_12",
+    "project_title": "Leeds Flood Alleviation Scheme",
+    "measures": [
+      { "name": "Natural Flood Management", "description": "Over 500,000 trees planted and 500 hectares of soil management at catchment scale." },
+      { "name": "Traditional engineering approaches", "description": "Flood walls, moveable weirs, embankments and 1.8 million m3 floodwater storage at Calverley." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_13",
+    "project_title": "TfL Marylebone Flyover Sustainable Drainage Systems",
+    "measures": [
+      { "name": "Sustainable Drainage Systems", "description": "Over 3,500m2 of rainwater collection space with nine rain gardens at the A5/Marylebone flyover intersection." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_14",
+    "project_title": "Adelaide Airport Irrigation Project",
+    "measures": [
+      { "name": "Irrigation", "description": "Trial of land irrigation to locally reduce high air temperatures around the airport." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_15",
+    "project_title": "Environment Agency Clays Lake Scheme",
+    "measures": [
+      { "name": "Flood storage reservoirs (dams)", "description": "Four flood storage reservoirs providing 1 in 50 year flood protection; Clays Lake dam replacement increases capacity from 10,000 to 400,000 cubic metres." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_16",
+    "project_title": "Network Rail Conwy Valley Line Washout",
+    "measures": [
+      { "name": "Earthworks", "description": "16,000 tonnes of rock armour reinforcing over a mile of embankment, plus six culverts installed." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_19",
+    "project_title": "City of Phoenix Street Transportation Department Cool Pavements Programme",
+    "measures": [
+      { "name": "Cool pavement technology", "description": "CoolSeal reflective coating applied to 100+ miles of roads, reducing heat storage compared to asphalt." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_20",
+    "project_title": "Pound Road West Upgrade Dandenong South",
+    "measures": [
+      { "name": "Glass fibre reinforcement for concrete", "description": "GFRP rebar used in lieu of steel to improve resilience to corrosion and climate change impacts." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_21",
+    "project_title": "Government of South Australia - Fire Suppression Systems",
+    "measures": [
+      { "name": "Ventilation systems", "description": "23 new exhaust fans and automated fire suppression system in tunnels for wildfire safety." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_22",
+    "project_title": "City of Parramatta Cool Roads Trial Project",
+    "measures": [
+      { "name": "Cool pavement technology", "description": "CoolSeal applied to 14,700m2 of road and carpark surfaces across 12 sites in Western Sydney." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_23",
+    "project_title": "LA Metro Climate Adaptation Plan",
+    "measures": [
+      { "name": "Hardening / protecting infrastructure", "description": "Engineering solutions including raising rail segments in flood zones and natural infrastructure for cooling." },
+      { "name": "Adjusting operations / changing behaviours", "description": "Rerouting buses during flooding and wildfires; blue water detours for flooded routes." },
+      { "name": "Relocating existing infrastructure or designing new infrastructure", "description": "Rory M. Shaw Wetlands Park on former landfill to address flood risk and stormwater pollution." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_25",
+    "project_title": "Resilient Florida Program (Dania Beach)",
+    "measures": [
+      { "name": "Drainage systems", "description": "New stormwater pipes, catch basins, earthworks and resilient roadway design to combat coastal flooding." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_26",
+    "project_title": "Qatar's Public Works Authority - Pumping Station and Outfall Tunnel",
+    "measures": [
+      { "name": "Pumping station and outfall tunnel", "description": "19.7m3/s pumping station and 10km undersea outfall tunnel to discharge stormwater and groundwater." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_28",
+    "project_title": "Climate Resilient Transport for Sydney Metro Rail System",
+    "measures": [
+      { "name": "Ventilation systems", "description": "Tunnel axial fans and 17 compressed air systems to ensure passenger comfort during heat waves." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_30",
+    "project_title": "Bradford Metropolitan Council - Trees and Stormwater Attenuation & Treatment Pits",
+    "measures": [
+      { "name": "Trees as stormwater attenuation and treatment pits", "description": "Six Field Maples with ArborFlow tree pits providing 30.81m3 storage capacity for 1 in 30-year storm events." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_31",
+    "project_title": "Network Rail Drainage System",
+    "measures": [
+      { "name": "Enhanced maintenance", "description": "Increased maintenance of vulnerable track locations and OLE systems to combat flooding impacts." },
+      { "name": "Drainage renewal and refurbishment", "description": "600,000+ metres of track drainage network rebuilt by 2029; 900+ miles under planned maintenance." },
+      { "name": "Remote condition monitoring", "description": "Smart movement sensors and CCTV at high-risk locations for proactive asset management." },
+      { "name": "Slope stabilisation", "description": "Reinforcement of embankments and erosion control measures to reduce landslip risks." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_32",
+    "project_title": "Heathrow Airport Balancing Pond",
+    "measures": [
+      { "name": "Balancing ponds", "description": "Ponds with tilting weirs, sheet pile walls, gabions and MBBR treatment to manage both drought and heavy rainfall." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_33",
+    "project_title": "Heathrow Airport Climate-resilient Grass",
+    "measures": [
+      { "name": "Climate-resilient grass", "description": "Rhizomatous tall fescue and tetraploid perennial ryegrass with deeper roots for drought resilience." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_34",
+    "project_title": "Caltrans Gleason Beach Road Realignment Project",
+    "measures": [
+      { "name": "Relocation of road", "description": "Half-mile section of SR 1 relocated 400 feet inland to avoid eroding cliff." },
+      { "name": "Bridge construction", "description": "850-foot bridge over Scotty Creek floodplain replacing existing culvert." },
+      { "name": "Habitat restoration", "description": "Culvert removal restoring natural hydrological flow and fish migration at Scotty Creek." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_37",
+    "project_title": "The Panama Canal Authority Strategic Measures for Water Saving",
+    "measures": [
+      { "name": "Fresh water surcharge", "description": "Variable fee component designed to preserve water levels in Gatun Lake." },
+      { "name": "Water-savings basins in locks", "description": "Basins recycling up to 60% of water used per transit in Neopanamax Locks." },
+      { "name": "Cross-filling in locks", "description": "Transferring water between Panamax Lock chambers to reduce freshwater needed per transit." },
+      { "name": "Restrictions on draft and daily transits", "description": "Vessel draft restrictions and transit limits saving 1.2 million m3 of water daily." },
+      { "name": "Minimising direction changes at locks", "description": "Reducing direction changes at Gatun Locks to conserve water." },
+      { "name": "Controlling and eliminating water leaks", "description": "Addressing leaks and suspending special lockages to reduce water loss." },
+      { "name": "Suspending special lockages and hydraulic assistance", "description": "Suspension of out-of-schedule transits to conserve water." },
+      { "name": "Minimising electricity generation", "description": "Reducing hydroelectric generation to preserve Gatun Lake water levels." },
+      { "name": "Water optimisation measures", "description": "Integrated measures tied to Gatun Dam to optimise water usage across canal operations." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_39",
+    "project_title": "Thames Water Counters Creek Sustainable Drainage Systems",
+    "measures": [
+      { "name": "Sustainable Drainage System (SuDS)", "description": "Permeable paving, geocellular storage, rain gardens and tree pits reducing surface water run-off." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_40",
+    "project_title": "Sheffield City Council Grey to Green",
+    "measures": [
+      { "name": "Sustainable Drainage System (SuDS)", "description": "1.5km continuous green infrastructure, rain gardens and public art; 60% of grey surfacing converted to green." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_42",
+    "project_title": "Santa Barbara County Montecito's Randall Road Debris Basin",
+    "measures": [
+      { "name": "Debris basin", "description": "Six-acre artificially landscaped depression capturing debris during heavy rainfall events." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_46",
+    "project_title": "Network Rail Dawlish Sea Wall",
+    "measures": [
+      { "name": "Sea wall", "description": "New 8-metre sea wall with recurve top along 815m protecting the Exeter to Newton Abbot railway." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_51",
+    "project_title": "TfL Rainwater Harvesting",
+    "measures": [
+      { "name": "Rainwater harvesting", "description": "Underground rainwater storage integrated into depot design; 23,000m3 recycled water used in 2023-24." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_79",
+    "project_title": "Environment Agency Thames Tidal Barrier",
+    "measures": [
+      { "name": "Tidal barriers", "description": "Thames Barrier spanning 520 metres protecting 116 rail/tube stations, 300km of roads and 1.5 million people." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_80",
+    "project_title": "Berlin BVG Green Tram Tracks",
+    "measures": [
+      { "name": "Green tramways", "description": "22,000+ metres of sedum or grass-planted tram tracks mitigating heat, storms and heavy rainfall." }
+    ]
+  },
+  {
+    "trib_article_id": "ID_81",
+    "project_title": "Department of Transport and Main Roads (Queensland)",
+    "measures": [
+      { "name": "Foamed bitumen stabilisation", "description": "Foam-bitumen stabilisation of Camp Cable Road and Stegemann Road for enhanced flood resilience." }
+    ]
+  }
+]

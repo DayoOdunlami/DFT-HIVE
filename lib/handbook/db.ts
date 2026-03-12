@@ -31,6 +31,8 @@ export type HiveArticle = {
   content_type?: "case_study" | "guidance";
   trib_ranking?: number;
   created_at?: string;
+  source_pdf_url?: string;
+  sections?: Record<string, string>;
 };
 
 export type HiveOption = {
@@ -116,22 +118,69 @@ function getSupabaseClient(): any {
 }
 
 // ---------------------------------------------------------------------------
-// JSON (L0) providers — from seed data
+// JSON fallback file (exported from Supabase via Phase 4B)
+// ---------------------------------------------------------------------------
+
+type CaseStudyJson = {
+  trib_id: string;
+  organisation: string;
+  transport_subsector?: string | null;
+  hazard_cause?: string | null;
+  hazard_effect?: string | null;
+  asset_type?: string | null;
+  measure_title?: string | null;
+  measure_description?: string | null;
+  case_study_text?: string | null;
+  source_pdf_url?: string | null;
+  sections?: Record<string, string>;
+};
+
+let _jsonCache: HiveArticle[] | null = null;
+
+function mapJsonToArticle(cs: CaseStudyJson): HiveArticle {
+  return {
+    id: cs.trib_id,
+    transport_sector: cs.transport_subsector ?? undefined,
+    hazard_cause: cs.hazard_cause ?? undefined,
+    hazard_effect: cs.hazard_effect ?? undefined,
+    asset_type: cs.asset_type ?? undefined,
+    project_title: cs.organisation,
+    measure_title: cs.measure_title ?? "Climate adaptation",
+    measure_description: cs.measure_description ?? undefined,
+    case_study_text: cs.case_study_text ?? cs.sections?.challenge ?? undefined,
+    content_type: "case_study",
+    source_pdf_url: cs.source_pdf_url ?? undefined,
+    sections: cs.sections,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// JSON (L0) providers — from case-studies.json, falling back to seed data
 // ---------------------------------------------------------------------------
 
 async function getJsonArticles(): Promise<HiveArticle[]> {
-  const { CASE_STUDIES } = await import("@/lib/hive/seed-data");
-  return CASE_STUDIES.map((cs: CaseStudy) => ({
-    id: cs.id,
-    transport_sector: cs.sector,
-    hazard_cause: cs.hazards.cause.join(", "),
-    hazard_effect: cs.hazards.effect.join(", "),
-    project_title: cs.title,
-    measure_title: cs.measures.join(", "),
-    measure_description: cs.measures.join(", "),
-    case_study_text: cs.summary,
-    content_type: "case_study" as const,
-  }));
+  if (_jsonCache) return _jsonCache;
+
+  try {
+    const jsonData = (await import("@/data/case-studies.json")).default as CaseStudyJson[];
+    _jsonCache = jsonData.map(mapJsonToArticle);
+    return _jsonCache;
+  } catch {
+    // Fall back to seed-data if JSON file doesn't exist
+    const { CASE_STUDIES } = await import("@/lib/hive/seed-data");
+    _jsonCache = CASE_STUDIES.map((cs: CaseStudy) => ({
+      id: cs.id,
+      transport_sector: cs.sector,
+      hazard_cause: cs.hazards.cause.join(", "),
+      hazard_effect: cs.hazards.effect.join(", "),
+      project_title: cs.title,
+      measure_title: cs.measures.join(", "),
+      measure_description: cs.measures.join(", "),
+      case_study_text: cs.summary,
+      content_type: "case_study" as const,
+    }));
+    return _jsonCache;
+  }
 }
 
 async function getJsonOptions(): Promise<HiveOption[]> {
@@ -186,7 +235,8 @@ export async function getHiveArticles(filters?: {
   }));
 }
 
-/** Fetch a single article by its trib_article_id (e.g. "ID_40") or UUID. */
+/** Fetch a single article by its trib_article_id (e.g. "ID_40") or UUID.
+ *  In Supabase mode, also loads structured sections from document_chunks. */
 export async function getHiveArticleById(id: string): Promise<HiveArticle | null> {
   const provider = getProvider();
 
@@ -196,18 +246,49 @@ export async function getHiveArticleById(id: string): Promise<HiveArticle | null
   }
 
   const sb = getSupabaseClient();
-  // In Supabase mode, prefer lookup by trib_article_id (string IDs from CASE_STUDIES)
-  // then fall back to UUID lookup
+  // Prefer lookup by trib_article_id, then fall back to UUID
+  let row: any = null;
   const { data: byTribId } = await sb
     .from("articles")
     .select("*")
     .eq("trib_article_id", id)
     .maybeSingle();
-  if (byTribId) return { ...byTribId, id: byTribId.trib_article_id ?? byTribId.id } as HiveArticle;
+  if (byTribId) {
+    row = byTribId;
+  } else {
+    const { data } = await sb.from("articles").select("*").eq("id", id).maybeSingle();
+    row = data;
+  }
+  if (!row) return null;
 
-  const { data, error } = await sb.from("articles").select("*").eq("id", id).single();
-  if (error) return null;
-  return { ...data, id: data.trib_article_id ?? data.id } as HiveArticle;
+  const article: HiveArticle = { ...row, id: row.trib_article_id ?? row.id };
+
+  // Load structured sections from document_chunks
+  const { data: chunks } = await sb
+    .from("document_chunks")
+    .select("section_key, chunk_text")
+    .eq("article_id", row.id)
+    .order("chunk_index");
+
+  if (chunks?.length) {
+    const sections: Record<string, string> = {};
+    for (const c of chunks) {
+      if (c.section_key && c.chunk_text) sections[c.section_key] = c.chunk_text;
+    }
+    article.sections = sections;
+  }
+
+  // Get source_pdf_url from sources table
+  if (row.source_id) {
+    const { data: src } = await sb
+      .from("sources")
+      .select("original_url")
+      .eq("id", row.source_id)
+      .maybeSingle();
+    if (src?.original_url) article.source_pdf_url = src.original_url;
+  }
+
+  return article;
 }
 
 /** Fetch all adaptation options, optionally filtered by sector/hazard. */
@@ -250,51 +331,65 @@ export async function getHiveOptions(filters?: {
  */
 export async function semanticSearch(
   query: string,
-  opts?: { limit?: number; threshold?: number }
+  opts?: { limit?: number; threshold?: number; filterSection?: string }
 ): Promise<DocumentChunk[]> {
   const provider = getProvider();
   const limit = opts?.limit ?? 10;
 
   if (provider === "json") {
-    // Keyword fallback — good enough for L0
     const articles = await getJsonArticles();
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-    const results = articles
-      .filter((a) =>
-        words.some(
-          (w) =>
-            a.case_study_text?.toLowerCase().includes(w) ||
-            a.project_title.toLowerCase().includes(w) ||
-            a.measure_title.toLowerCase().includes(w)
-        )
-      )
-      .slice(0, limit)
-      .map((a, i) => ({
-        id: `json-${a.id}-${i}`,
-        article_id: a.id,
-        chunk_index: 0,
-        chunk_text: a.case_study_text ?? a.measure_description ?? a.project_title,
-      }));
+
+    // Search across article metadata and section content
+    const results: DocumentChunk[] = [];
+    for (const a of articles) {
+      const texts = [
+        a.case_study_text,
+        a.project_title,
+        a.measure_title,
+        a.hazard_cause,
+        a.transport_sector,
+      ];
+      // Also search within section content if available
+      if (a.sections) {
+        for (const content of Object.values(a.sections)) {
+          texts.push(content);
+        }
+      }
+      const match = words.some((w) =>
+        texts.some((t) => t?.toLowerCase().includes(w))
+      );
+      if (match) {
+        results.push({
+          id: `json-${a.id}-0`,
+          article_id: a.id,
+          chunk_index: 0,
+          chunk_text: a.case_study_text ?? a.measure_description ?? a.project_title,
+        });
+      }
+      if (results.length >= limit) break;
+    }
     return results;
   }
 
-  // Supabase: call OpenAI to get embedding, then pgvector RPC
+  // Supabase: embed query with text-embedding-3-small, then pgvector RPC
   const { default: OpenAI } = await import("openai");
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const embResponse = await openai.embeddings.create({
-    model: "text-embedding-ada-002",
+    model: "text-embedding-3-small",
     input: query,
   });
   const embedding = embResponse.data[0].embedding;
 
   const sb = getSupabaseClient();
-  // hive_match_chunks is a public-schema function — call without schema prefix
+  // hive_match_chunks is in the public schema — call without schema prefix
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (sb as any).rpc("hive_match_chunks", {
     query_embedding: embedding,
     match_threshold: opts?.threshold ?? 0.7,
     match_count: limit,
+    filter_section: opts?.filterSection ?? null,
   });
 
   if (error) throw new Error(`Supabase semanticSearch: ${error.message}`);
@@ -368,12 +463,12 @@ export async function getProviderStatus(): Promise<{
   const provider = getProvider();
 
   if (provider === "json") {
-    const { CASE_STUDIES } = await import("@/lib/hive/seed-data");
+    const articles = await getJsonArticles();
     const { OPTIONS_DATA } = await import("@/lib/handbook/options-data");
     return {
       provider: "json (L0 offline)",
       healthy: true,
-      articleCount: CASE_STUDIES.length,
+      articleCount: articles.length,
       optionCount: OPTIONS_DATA.length,
     };
   }
@@ -396,5 +491,38 @@ export async function getProviderStatus(): Promise<{
       healthy: false,
       message: err instanceof Error ? err.message : "Unknown connection error",
     };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sync guard — runs once at startup in supabase mode
+// ---------------------------------------------------------------------------
+
+let _syncChecked = false;
+
+export async function checkSyncStatus(): Promise<void> {
+  if (_syncChecked || getProvider() !== "supabase") return;
+  _syncChecked = true;
+
+  try {
+    const sb = getSupabaseClient();
+    const { data: dbArticles } = await sb.from("articles").select("id");
+    const dbCount = dbArticles?.length ?? 0;
+
+    let jsonCount = 0;
+    try {
+      const jsonData = (await import("@/data/case-studies.json")).default;
+      jsonCount = Array.isArray(jsonData) ? jsonData.length : 0;
+    } catch {
+      jsonCount = 0;
+    }
+
+    if (dbCount !== jsonCount) {
+      console.warn(
+        `[HIVE] Sync warning: DB has ${dbCount} articles, JSON has ${jsonCount}. Run: npm run export:hive to update the fallback.`
+      );
+    }
+  } catch {
+    // Non-fatal — don't block startup
   }
 }

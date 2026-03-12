@@ -254,6 +254,46 @@ export function CaseBody({ cs }: CaseBodyProps) {
         </div>
       </div>
 
+      {/* Structured sections from document_chunks */}
+      {cs.sections && Object.keys(cs.sections).length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, borderTop: "1px solid #e5e7eb", paddingTop: 20 }}>
+          {SECTION_ORDER.map(([key, label]) => {
+            const text = cs.sections?.[key];
+            if (!text) return null;
+            return (
+              <div key={key}>
+                <SectionLabel>{label}</SectionLabel>
+                <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.7, margin: 0, whiteSpace: "pre-line" }}>
+                  {text.replace(/•\s*/g, "\n• ").trim()}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Source link */}
+      {cs.source_pdf_url && (
+        <a
+          href={cs.source_pdf_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#1d70b8",
+            textDecoration: "none",
+            padding: "10px 0",
+            borderTop: "1px solid #f3f4f6",
+          }}
+        >
+          View original TRIB case study →
+        </a>
+      )}
+
       {/* Reference */}
       <p style={{ fontSize: 11, color: "#9ca3af", borderTop: "1px solid #f3f4f6", paddingTop: 12 }}>
         Ref: {cs.id} · {cs.organisation} · Curated &amp; verified by HIVE
@@ -261,3 +301,16 @@ export function CaseBody({ cs }: CaseBodyProps) {
     </div>
   );
 }
+
+const SECTION_ORDER: [string, string][] = [
+  ["challenge", "The Challenge"],
+  ["adaptation_measures", "Adaptation Measures"],
+  ["applicability", "Applicability"],
+  ["financials", "Financials"],
+  ["resourcing", "Resourcing"],
+  ["co_benefits", "Co-benefits"],
+  ["evaluation", "Evaluation"],
+  ["challenges", "Challenges"],
+  ["lessons_learned", "Lessons Learned"],
+  ["innovation_opportunities", "Innovation Opportunities"],
+];

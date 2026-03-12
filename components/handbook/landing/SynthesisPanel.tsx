@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Synthesis } from "@/lib/hive/search";
 import type { CaseStudy } from "@/lib/hive/seed-data";
@@ -40,11 +41,49 @@ export function SynthesisPanel({ synthesis, results }: SynthesisPanelProps) {
   const router = useRouter();
   const { theme: T } = useChatContext();
   const caseIds = results.map((r) => r.id).join(",");
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const handleGenerateBrief = () => {
     router.push(
       `/handbook/brief?from=analysis&ids=${encodeURIComponent(caseIds)}`
     );
+  };
+
+  const handleAiSummary = async () => {
+    if (aiSummary) {
+      setAiSummary(null);
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/handbook/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              text: `Provide a single concise paragraph (3-4 sentences) summarising the cross-case patterns across these ${results.length} case studies. Focus on the strongest finding and any notable gaps. Cite every case ID.`,
+            },
+          ],
+          context: {
+            mode: "explore",
+            result_set: results.map((r) => ({
+              id: r.id,
+              title: r.title,
+              sector: r.sector,
+            })),
+          },
+        }),
+      });
+      const data = await res.json();
+      setAiSummary(data.message ?? data.text ?? "Unable to generate summary.");
+    } catch {
+      setAiSummary("Unable to generate AI summary at this time.");
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -197,6 +236,84 @@ export function SynthesisPanel({ synthesis, results }: SynthesisPanelProps) {
                 </span>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* AI Summary */}
+      <div style={{ marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+        <button
+          onClick={handleAiSummary}
+          disabled={aiLoading}
+          style={{
+            alignSelf: "flex-start",
+            fontSize: 11,
+            fontWeight: 600,
+            padding: "5px 12px",
+            borderRadius: 6,
+            background: aiSummary ? T.surfaceAlt : "rgba(255,255,255,0.7)",
+            color: T.accent,
+            border: `1px solid ${T.badgeBorder}`,
+            cursor: aiLoading ? "default" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+            fontFamily: "inherit",
+            transition: "all 0.15s",
+          }}
+        >
+          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          {aiLoading ? "Generating..." : aiSummary ? "Hide AI summary" : "AI summary"}
+        </button>
+        {aiSummary && (
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "rgba(255,255,255,0.85)",
+              borderRadius: 8,
+              border: `1px solid ${T.badgeBorder}`,
+              fontSize: 12,
+              color: T.textPrimary,
+              lineHeight: 1.65,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                marginBottom: 6,
+                fontSize: 10,
+                fontWeight: 700,
+                color: T.accent,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              AI-generated
+              <button
+                onClick={() => { setAiSummary(null); handleAiSummary(); }}
+                style={{
+                  marginLeft: "auto",
+                  fontSize: 10,
+                  color: T.textMuted,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 2,
+                }}
+              >
+                Refresh
+              </button>
+            </div>
+            {aiSummary}
           </div>
         )}
       </div>

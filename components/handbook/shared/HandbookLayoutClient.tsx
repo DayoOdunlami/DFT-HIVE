@@ -12,7 +12,9 @@ export function HandbookLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { chatOpen, chatContext, closeChat } = useChatContext();
 
-  const isBriefPage = pathname === "/handbook/brief" || pathname?.startsWith("/handbook/brief/");
+  const isBriefPage =
+    pathname === "/handbook/brief" ||
+    pathname?.startsWith("/handbook/brief/");
 
   if (isBriefPage) {
     return <>{children}</>;
@@ -22,7 +24,6 @@ export function HandbookLayoutClient({ children }: { children: ReactNode }) {
     <div style={{ minHeight: "100vh" }}>
       <HandbookNav />
 
-      {/* Main content shifts left when chat drawer opens */}
       <main
         id="handbook-main"
         style={{
@@ -33,16 +34,9 @@ export function HandbookLayoutClient({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      <ChatPanel
-        context={chatContext}
-        open={chatOpen}
-        onClose={closeChat}
-      />
+      <ChatPanel context={chatContext} open={chatOpen} onClose={closeChat} />
 
-      {/* Onboarding tooltips — first-visit walkthrough */}
       <OnboardingTooltips />
-
-      {/* Feedback survey — appears after 3+ case study views */}
       <FeedbackSurvey />
     </div>
   );

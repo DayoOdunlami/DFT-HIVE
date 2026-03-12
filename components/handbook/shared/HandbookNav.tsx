@@ -26,6 +26,14 @@ export function HandbookNav() {
     else openChat();
   };
 
+  const chatLabel = chatOpen
+    ? "Close chat"
+    : pathname?.startsWith("/handbook/brief")
+      ? "Ask about this brief"
+      : pathname?.match(/^\/handbook\/ID_/)
+        ? "Ask about this case"
+        : "Ask HIVE";
+
   return (
     <>
       {/* DfT green 5px stripe — DfT theme only, per GOV.UK / DfT branding */}
@@ -200,7 +208,7 @@ export function HandbookNav() {
             <ChatTrigger
               onClick={handleChatToggle}
               hasMessages={hasMessages}
-              label={chatOpen ? "Close chat" : "Ask HIVE"}
+              label={chatLabel}
               data-onboard="chat-trigger"
             />
           </div>
