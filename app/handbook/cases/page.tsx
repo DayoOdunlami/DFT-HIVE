@@ -1,6 +1,6 @@
 // @ts-nocheck
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { CASE_STUDIES as SEED_CASE_STUDIES } from "@/lib/hive/seed-data";
 import { useChatContext } from "@/components/handbook/shared/ChatContext";
@@ -463,8 +463,8 @@ function FilterPill({ label, active, onClick }) {
   );
 }
 
-// ── MAIN PAGE ─────────────────────────────────────────────────────────────────
-export default function CasesPage() {
+// ── MAIN PAGE (uses useSearchParams — must be inside Suspense) ─────────────────
+function CasesPageContent() {
   const { themeKey, setThemeKey } = useChatContext();
   const T = THEMES[themeKey] ?? THEMES.light;
 
@@ -711,5 +711,22 @@ export default function CasesPage() {
         <BriefTray brief={brief} onRemove={toggleBrief} onGenerate={handleGenerate}/>
       </div>
     </>
+  );
+}
+
+// Wrap in Suspense so useSearchParams() is allowed during static generation (Next.js 15)
+function CasesPageFallback() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans',sans-serif", color: "#6b7280" }}>
+      Loading…
+    </div>
+  );
+}
+
+export default function CasesPage() {
+  return (
+    <Suspense fallback={<CasesPageFallback />}>
+      <CasesPageContent />
+    </Suspense>
   );
 }
